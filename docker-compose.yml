@@ -3,64 +3,101 @@ version: "3.9"
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: aiapp-postgres
+    container_name: aiquizapp-postgres
     environment:
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD: apppass
-      POSTGRES_DB: appdb
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_DB: ${POSTGRES_DB:-aiquizapp_dev}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aiquizapp_network
 
   redis:
     image: redis:7-alpine
-    container_name: aiapp-redis
+    container_name: aiquizapp-redis
+    command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aiquizapp_network
 
-  back:
+  backend:
     build:
       context: ./packages/back
       dockerfile: Dockerfile
-    container_name: aiapp-back
+    container_name: aiquizapp-backend
     command: pnpm run start:dev
     volumes:
       - ./packages/back:/app
+      - /app/node_modules
+      - uploads_data:/app/uploads
     environment:
-      NODE_ENV: development
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USERNAME: appuser
-      DATABASE_PASSWORD: apppass
-      DATABASE_NAME: appdb
-      DATABASE_URL: postgres://appuser:apppass@postgres:5432/appdb
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-3000}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      DB_NAME: ${POSTGRES_DB:-aiquizapp_dev}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/${POSTGRES_DB:-aiquizapp_dev}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      PORT: 3001
-      JWT_SECRET: your-secret-key-change-this-in-production
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7d}
     ports:
-      - "3001:3001"
+      - "${BACKEND_PORT:-3000}:${BACKEND_PORT:-3000}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aiquizapp_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: aiquizapp-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@aiquizapp.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "${PGADMIN_PORT:-8080}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - postgres
-      - redis
+    networks:
+      - aiquizapp_network
+    profiles:
+      - tools
 
-  # Note: モバイルアプリは別途 Expo で起動します
-  # mobile:
-  #   build:
-  #     context: ./packages/mobile
-  #     dockerfile: Dockerfile
-  #   container_name: aiapp-mobile
-  #   command: npm start
-  #   volumes:
-  #     - ./packages/mobile:/app
-  #   environment:
-  #     NODE_ENV: development
-  #     EXPO_PUBLIC_API_URL: http://localhost:3001
-  #   ports:
-  #     - "19006:19006"
-  #   depends_on:
-  #     - back
+networks:
+  aiquizapp_network:
+    driver: bridge
 
 volumes:
-  db-data:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  uploads_data:
+    driver: local
+  pgadmin_data:
+    driver: local
