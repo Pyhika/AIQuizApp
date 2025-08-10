@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: aiapp-postgres
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: aiapp-redis
+    ports:
+      - "6379:6379"
+
+  back:
+    build:
+      context: ./packages/back
+      dockerfile: Dockerfile
+    container_name: aiapp-back
+    command: pnpm run start:dev
+    volumes:
+      - ./packages/back:/app
+    environment:
+      NODE_ENV: development
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: appuser
+      DATABASE_PASSWORD: apppass
+      DATABASE_NAME: appdb
+      DATABASE_URL: postgres://appuser:apppass@postgres:5432/appdb
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 3001
+      JWT_SECRET: your-secret-key-change-this-in-production
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+
+  # Note: モバイルアプリは別途 Expo で起動します
+  # mobile:
+  #   build:
+  #     context: ./packages/mobile
+  #     dockerfile: Dockerfile
+  #   container_name: aiapp-mobile
+  #   command: npm start
+  #   volumes:
+  #     - ./packages/mobile:/app
+  #   environment:
+  #     NODE_ENV: development
+  #     EXPO_PUBLIC_API_URL: http://localhost:3001
+  #   ports:
+  #     - "19006:19006"
+  #   depends_on:
+  #     - back
+
+volumes:
+  db-data:

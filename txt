@@ -1,0 +1,10 @@
+# front
+next react react-dom typescript tailwindcss @headlessui/react clsx
+framer-motion @react-three/fiber @react-three/drei zustand
+# back
+@nestjs/core @nestjs/common @nestjs/websockets @nestjs/bull bullmq
+langchain openai pg typeorm @nestjs/typeorm class-validator
+# dev
+eslint prettier husky lint-staged commitlint
+# infra / misc
+docker docker-compose github-actions terraform aws-sdk sendgrid/mail
