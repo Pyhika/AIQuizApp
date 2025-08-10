@@ -34,6 +34,12 @@ export class QuizAttempt {
   @Column({ type: 'float', default: 0.0 })
   confidence: number; // 解答の自信度（0.0-1.0）
 
+  @Column({ type: 'float', default: 0 })
+  score: number; // 得点（0-100）
+
   @CreateDateColumn()
   createdAt: Date;
+
+  @CreateDateColumn()
+  startedAt: Date;
 }

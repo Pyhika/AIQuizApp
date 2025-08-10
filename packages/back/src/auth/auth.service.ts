@@ -98,4 +98,25 @@ export class AuthService {
     }
     return user;
   }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('ユーザーが見つかりません');
+    }
+
+    // 現在のパスワードの検証
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('現在のパスワードが正しくありません');
+    }
+
+    // 新しいパスワードのハッシュ化
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // パスワードの更新
+    user.password = hashedPassword;
+    await this.userRepository.save(user);
+  }
 }

@@ -167,8 +167,7 @@ export default function HomeScreen() {
         {
           text: '開始',
           onPress: () => {
-            Alert.alert('機能準備中', 'クイズ解答画面は準備中です');
-            // router.push(`/screens/QuizScreen?id=${quiz.id}`);
+            router.push(`/quiz/${quiz.id}`);
           }
         }
       ]
@@ -322,9 +321,7 @@ export default function HomeScreen() {
                       </Button>
                       <Button
                         mode="contained"
-                        onPress={() => {
-                          Alert.alert('機能準備中', 'クイズ解答画面は準備中です');
-                        }}
+                        onPress={() => router.push(`/quiz/${quiz.id}`)}
                         style={styles.startButton}
                         compact
                       >

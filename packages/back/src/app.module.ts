@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { QuizModule } from './quiz/quiz.module';
 import { AuthModule } from './auth/auth.module';
+import { ExportModule } from './export/export.module';
 import { Quiz } from './entities/quiz.entity';
 import { User } from './entities/user.entity';
 import { QuizAttempt } from './entities/quiz-attempt.entity';
@@ -39,6 +40,7 @@ import configuration from './config';
     }),
     QuizModule,
     AuthModule,
+    ExportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

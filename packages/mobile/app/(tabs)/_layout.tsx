@@ -48,6 +48,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="review"
+        options={{
+          title: '復習',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="brain" size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="chat"
         options={{
           title: 'チャット',
