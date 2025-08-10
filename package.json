@@ -1,0 +1,30 @@
+{
+  "name": "aiapp",
+  "version": "1.0.0",
+  "description": "AI-powered Quiz Application",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "./start-dev.sh",
+    "backend": "cd packages/back && pnpm run start:dev",
+    "mobile": "cd packages/mobile && npx expo start",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "install:all": "cd packages/back && pnpm install && cd ../mobile && npm install",
+    "test": "cd packages/back && pnpm test && cd ../mobile && npm test",
+    "clean": "rm -rf packages/*/node_modules packages/*/dist packages/*/.expo"
+  },
+  "keywords": [
+    "quiz",
+    "ai",
+    "education",
+    "react-native",
+    "nestjs",
+    "expo"
+  ],
+  "author": "",
+  "license": "MIT"
+}

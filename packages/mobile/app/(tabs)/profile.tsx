@@ -152,6 +152,14 @@ export default function ProfileScreen() {
                 <Paragraph style={styles.userLevel}>レベル: {userData.level}</Paragraph>
               </View>
             </View>
+            <Button
+              mode="outlined"
+              onPress={() => router.push('/profile-edit')}
+              style={styles.editButton}
+              icon="account-edit"
+            >
+              プロフィールを編集
+            </Button>
           </Card.Content>
         </Card>
 
@@ -352,6 +360,9 @@ const styles = StyleSheet.create({
   },
   button: {
     marginVertical: 8,
+  },
+  editButton: {
+    marginTop: 16,
   },
   logoutButton: {
     backgroundColor: '#ff9800',
