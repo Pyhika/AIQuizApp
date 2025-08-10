@@ -24,6 +24,18 @@ export class User {
   @Column({ type: 'varchar', length: 50, nullable: true })
   lastName: string;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  profileImage: string;
+
+  @Column({ type: 'text', nullable: true })
+  bio: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  phoneNumber: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  location: string;
+
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
