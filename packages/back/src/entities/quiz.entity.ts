@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { User } from './user.entity';
 import { QuizAttempt } from './quiz-attempt.entity';
 
@@ -37,7 +45,11 @@ export class Quiz {
   @Column({ type: 'text', nullable: true })
   explanation: string;
 
-  @Column({ type: 'enum', enum: QuizDifficulty, default: QuizDifficulty.MEDIUM })
+  @Column({
+    type: 'enum',
+    enum: QuizDifficulty,
+    default: QuizDifficulty.MEDIUM,
+  })
   difficulty: QuizDifficulty;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
@@ -62,10 +74,10 @@ export class Quiz {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @ManyToOne(() => User, user => user.quizzes)
+  @ManyToOne(() => User, (user) => user.quizzes)
   user: User;
 
-  @OneToMany(() => QuizAttempt, attempt => attempt.quiz)
+  @OneToMany(() => QuizAttempt, (attempt) => attempt.quiz)
   attempts: QuizAttempt[];
 
   @CreateDateColumn()

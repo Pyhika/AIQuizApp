@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -14,13 +18,15 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const { email, username, password, firstName, lastName } = registerDto;
 
     // メールアドレスの重複チェック
-    const existingUser = await this.userRepository.findOne({ where: { email } });
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
     if (existingUser) {
       throw new ConflictException('このメールアドレスは既に使用されています');
     }
@@ -62,13 +68,17 @@ export class AuthService {
     // ユーザーの存在確認
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
+      throw new UnauthorizedException(
+        'メールアドレスまたはパスワードが正しくありません',
+      );
     }
 
     // パスワードの検証
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
+      throw new UnauthorizedException(
+        'メールアドレスまたはパスワードが正しくありません',
+      );
     }
 
     // JWTトークンの生成
@@ -99,14 +109,21 @@ export class AuthService {
     return user;
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new UnauthorizedException('ユーザーが見つかりません');
     }
 
     // 現在のパスワードの検証
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('現在のパスワードが正しくありません');
     }

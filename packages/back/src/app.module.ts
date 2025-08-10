@@ -17,10 +17,7 @@ import configuration from './config';
     ConfigModule.forRoot({
       isGlobal: true,
       load: configuration,
-      envFilePath: [
-        `.env.${process.env.NODE_ENV || 'development'}`,
-        '.env',
-      ],
+      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -47,4 +44,4 @@ import configuration from './config';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

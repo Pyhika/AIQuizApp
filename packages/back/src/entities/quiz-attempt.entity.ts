@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+} from 'typeorm';
 import { Quiz } from './quiz.entity';
 import { User } from './user.entity';
 
@@ -7,10 +13,10 @@ export class QuizAttempt {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Quiz, quiz => quiz.attempts)
+  @ManyToOne(() => Quiz, (quiz) => quiz.attempts)
   quiz: Quiz;
 
-  @ManyToOne(() => User, user => user.quizAttempts)
+  @ManyToOne(() => User, (user) => user.quizAttempts)
   user: User;
 
   @Column({ type: 'text' })
@@ -36,6 +42,9 @@ export class QuizAttempt {
 
   @Column({ type: 'float', default: 0 })
   score: number; // 得点（0-100）
+
+  @Column({ type: 'boolean', default: false })
+  passed: boolean; // 合格したかどうか
 
   @CreateDateColumn()
   createdAt: Date;

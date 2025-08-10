@@ -1,4 +1,11 @@
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+  Matches,
+} from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -28,9 +35,12 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, {
-    message: 'Please provide a valid phone number',
-  })
+  @Matches(
+    /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/,
+    {
+      message: 'Please provide a valid phone number',
+    },
+  )
   phoneNumber?: string;
 
   @IsOptional()

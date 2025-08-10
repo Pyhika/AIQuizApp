@@ -14,8 +14,12 @@ import { extname } from 'path';
       storage: diskStorage({
         destination: './uploads/profiles',
         filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          callback(null, `profile-${uniqueSuffix}${extname(file.originalname)}`);
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          callback(
+            null,
+            `profile-${uniqueSuffix}${extname(file.originalname)}`,
+          );
         },
       }),
       limits: {

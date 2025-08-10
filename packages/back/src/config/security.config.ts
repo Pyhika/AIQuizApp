@@ -38,7 +38,9 @@ export default registerAs('security', () => ({
   // CORS configuration
   cors: {
     origin: (origin: string, callback: Function) => {
-      const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'];
+      const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
+        'http://localhost:3000',
+      ];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -54,8 +56,8 @@ export default registerAs('security', () => ({
 
   // Rate limiting
   rateLimit: {
-    ttl: parseInt(process.env.RATE_LIMIT_TTL, 10) || 60000, // milliseconds
-    limit: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
+    ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000', 10), // milliseconds
+    limit: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
     skipIf: (context: any) => {
       // Skip rate limiting for health checks
       return context.req.url === '/health';
@@ -154,8 +156,8 @@ export default registerAs('security', () => ({
     'X-XSS-Protection': '1; mode=block',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0',
+    Pragma: 'no-cache',
+    Expires: '0',
   },
 
   // Encryption

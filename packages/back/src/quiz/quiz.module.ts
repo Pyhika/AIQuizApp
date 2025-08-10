@@ -15,4 +15,4 @@ import { User } from '../entities/user.entity';
   providers: [QuizService, QuizAttemptService, QuizDifficultyService],
   exports: [QuizService, QuizAttemptService, QuizDifficultyService],
 })
-export class QuizModule { }
+export class QuizModule {}

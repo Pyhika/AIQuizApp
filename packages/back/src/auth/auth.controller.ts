@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Get, UseGuards, Request, ValidationPipe, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Request,
+  ValidationPipe,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -9,15 +18,19 @@ import { User } from '../entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @Post('register')
-  async register(@Body(ValidationPipe) registerDto: RegisterDto): Promise<AuthResponseDto> {
+  async register(
+    @Body(ValidationPipe) registerDto: RegisterDto,
+  ): Promise<AuthResponseDto> {
     return this.authService.register(registerDto);
   }
 
   @Post('login')
-  async login(@Body(ValidationPipe) loginDto: LoginDto): Promise<AuthResponseDto> {
+  async login(
+    @Body(ValidationPipe) loginDto: LoginDto,
+  ): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
   }
 
@@ -42,7 +55,9 @@ export class AuthController {
     @Body(ValidationPipe) changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string }> {
     if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
-      throw new BadRequestException('新しいパスワードと確認用パスワードが一致しません');
+      throw new BadRequestException(
+        '新しいパスワードと確認用パスワードが一致しません',
+      );
     }
 
     await this.authService.changePassword(

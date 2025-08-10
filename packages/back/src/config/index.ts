@@ -2,8 +2,8 @@ import appConfig from './app.config';
 import authConfig from './auth.config';
 import databaseConfig from './database.config';
 import redisConfig from './redis.config';
-import openaiConfig from './openai.config';
-import anthropicConfig from './anthropic.config';
+import { OpenAIConfig } from './openai.config';
+import { AnthropicConfig } from './anthropic.config';
 import emailConfig from './email.config';
 
 export default [
@@ -11,7 +11,7 @@ export default [
   authConfig,
   databaseConfig,
   redisConfig,
-  openaiConfig,
-  anthropicConfig,
   emailConfig,
 ];
+
+export { OpenAIConfig, AnthropicConfig };

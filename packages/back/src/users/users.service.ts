@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -38,7 +42,7 @@ export class UsersService {
     return user;
   }
 
-  async findByEmail(email: string): Promise<User | undefined> {
+  async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { email } });
   }
 
@@ -90,7 +94,7 @@ export class UsersService {
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
-      user.profileImage = null;
+      user.profileImage = '';
       return this.usersRepository.save(user);
     }
 
@@ -109,7 +113,7 @@ export class UsersService {
 
     const totalQuizzesCreated = user.quizzes?.length || 0;
     const totalQuizzesTaken = user.quizAttempts?.length || 0;
-    
+
     // Calculate average score
     let averageScore = 0;
     if (user.quizAttempts?.length > 0) {
@@ -122,7 +126,9 @@ export class UsersService {
     // Calculate pass rate
     let passRate = 0;
     if (user.quizAttempts?.length > 0) {
-      const passedAttempts = user.quizAttempts.filter(attempt => attempt.passed).length;
+      const passedAttempts = user.quizAttempts.filter(
+        (attempt) => attempt.passed,
+      ).length;
       passRate = Math.round((passedAttempts / user.quizAttempts.length) * 100);
     }
 

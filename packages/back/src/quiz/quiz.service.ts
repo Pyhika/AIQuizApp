@@ -36,7 +36,7 @@ export class QuizService {
   constructor(
     @InjectRepository(Quiz)
     private quizRepository: Repository<Quiz>,
-  ) { }
+  ) {}
 
   // 全クイズ取得
   async findAll(): Promise<Quiz[]> {
@@ -67,7 +67,9 @@ export class QuizService {
     return this.quizRepository
       .createQueryBuilder('quiz')
       .where('quiz.isActive = :isActive', { isActive: true })
-      .andWhere('JSON_OVERLAPS(quiz.tags, :tags)', { tags: JSON.stringify(tags) })
+      .andWhere('JSON_OVERLAPS(quiz.tags, :tags)', {
+        tags: JSON.stringify(tags),
+      })
       .orderBy('quiz.createdAt', 'DESC')
       .getMany();
   }
@@ -82,9 +84,9 @@ export class QuizService {
       .getMany();
 
     const allTags = new Set<string>();
-    result.forEach(quiz => {
+    result.forEach((quiz) => {
       if (quiz.tags) {
-        quiz.tags.forEach(tag => allTags.add(tag));
+        quiz.tags.forEach((tag) => allTags.add(tag));
       }
     });
 
@@ -100,11 +102,13 @@ export class QuizService {
       .andWhere('quiz.category IS NOT NULL')
       .getRawMany();
 
-    return result.map(item => item.category).sort();
+    return result.map((item) => item.category).sort();
   }
 
   // AIでクイズ生成（テキストから）
-  async generateQuizFromText(generateQuizDto: GenerateQuizDto): Promise<Quiz[]> {
+  async generateQuizFromText(
+    generateQuizDto: GenerateQuizDto,
+  ): Promise<Quiz[]> {
     try {
       const openai = OpenAIConfig.getInstance();
       const prompt = OpenAIConfig.getQuizGenerationPrompt(
@@ -138,7 +142,10 @@ export class QuizService {
           options: quizItem.options,
           correctAnswer: quizItem.correctAnswer,
           explanation: quizItem.explanation,
-          difficulty: quizItem.difficulty || generateQuizDto.difficulty || QuizDifficulty.MEDIUM,
+          difficulty:
+            quizItem.difficulty ||
+            generateQuizDto.difficulty ||
+            QuizDifficulty.MEDIUM,
           category: quizItem.category || generateQuizDto.category || '一般',
           tags: generateQuizDto.tags || quizItem.tags || [],
           relatedLinks: quizItem.relatedLinks || [],
@@ -166,12 +173,15 @@ export class QuizService {
   }
 
   // 画像からクイズ生成
-  async generateQuizFromImage(imageBuffer: Buffer, options?: {
-    questionCount?: number;
-    difficulty?: QuizDifficulty;
-    category?: string;
-    tags?: string[];
-  }): Promise<Quiz[]> {
+  async generateQuizFromImage(
+    imageBuffer: Buffer,
+    options?: {
+      questionCount?: number;
+      difficulty?: QuizDifficulty;
+      category?: string;
+      tags?: string[];
+    },
+  ): Promise<Quiz[]> {
     try {
       const openai = OpenAIConfig.getInstance();
 
@@ -217,7 +227,10 @@ export class QuizService {
   }
 
   // クイズ更新
-  async updateQuiz(id: string, updateData: Partial<CreateQuizDto>): Promise<Quiz> {
+  async updateQuiz(
+    id: string,
+    updateData: Partial<CreateQuizDto>,
+  ): Promise<Quiz> {
     await this.quizRepository.update(id, updateData);
     const updatedQuiz = await this.findOne(id);
     if (!updatedQuiz) {
@@ -260,22 +273,26 @@ export class QuizService {
 
     if (filters.tags && filters.tags.length > 0) {
       query = query.andWhere('JSON_OVERLAPS(quiz.tags, :tags)', {
-        tags: JSON.stringify(filters.tags)
+        tags: JSON.stringify(filters.tags),
       });
     }
 
     if (filters.category) {
-      query = query.andWhere('quiz.category = :category', { category: filters.category });
+      query = query.andWhere('quiz.category = :category', {
+        category: filters.category,
+      });
     }
 
     if (filters.difficulty) {
-      query = query.andWhere('quiz.difficulty = :difficulty', { difficulty: filters.difficulty });
+      query = query.andWhere('quiz.difficulty = :difficulty', {
+        difficulty: filters.difficulty,
+      });
     }
 
     if (filters.searchText) {
       query = query.andWhere(
         '(quiz.title LIKE :searchText OR quiz.question LIKE :searchText)',
-        { searchText: `%${filters.searchText}%` }
+        { searchText: `%${filters.searchText}%` },
       );
     }
 

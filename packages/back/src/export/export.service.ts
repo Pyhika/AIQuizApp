@@ -31,14 +31,17 @@ export class ExportService {
     private userRepository: Repository<User>,
   ) {}
 
-  async exportUserLearningHistory(userId: string, format: 'csv' | 'json' = 'csv'): Promise<string | object[]> {
+  async exportUserLearningHistory(
+    userId: string,
+    format: 'csv' | 'json' = 'csv',
+  ): Promise<string | object[]> {
     const attempts = await this.quizAttemptRepository.find({
       where: { user: { id: userId } },
       relations: ['quiz', 'user'],
       order: { createdAt: 'DESC' },
     });
 
-    const exportData: ExportData[] = attempts.map(attempt => ({
+    const exportData: ExportData[] = attempts.map((attempt) => ({
       attemptDate: attempt.createdAt.toISOString(),
       quizTitle: attempt.quiz?.title || 'Unknown Quiz',
       quizCategory: attempt.quiz?.category || 'Uncategorized',
@@ -77,18 +80,27 @@ export class ExportService {
     return csv;
   }
 
-  async exportQuizStatistics(userId: string, format: 'csv' | 'json' = 'csv'): Promise<string | object> {
+  async exportQuizStatistics(
+    userId: string,
+    format: 'csv' | 'json' = 'csv',
+  ): Promise<string | object> {
     const attempts = await this.quizAttemptRepository.find({
       where: { user: { id: userId } },
       relations: ['quiz'],
     });
 
     // カテゴリ別統計
-    const categoryStats: Record<string, { total: number; correct: number; avgScore: number }> = {};
-    
+    const categoryStats: Record<
+      string,
+      { total: number; correct: number; avgScore: number }
+    > = {};
+
     // 難易度別統計
-    const difficultyStats: Record<string, { total: number; correct: number; avgScore: number }> = {};
-    
+    const difficultyStats: Record<
+      string,
+      { total: number; correct: number; avgScore: number }
+    > = {};
+
     // 全体統計
     let totalAttempts = 0;
     let totalCorrect = 0;
@@ -120,17 +132,21 @@ export class ExportService {
 
     // 平均スコアの計算
     for (const category in categoryStats) {
-      categoryStats[category].avgScore = categoryStats[category].avgScore / categoryStats[category].total;
+      categoryStats[category].avgScore =
+        categoryStats[category].avgScore / categoryStats[category].total;
     }
     for (const difficulty in difficultyStats) {
-      difficultyStats[difficulty].avgScore = difficultyStats[difficulty].avgScore / difficultyStats[difficulty].total;
+      difficultyStats[difficulty].avgScore =
+        difficultyStats[difficulty].avgScore /
+        difficultyStats[difficulty].total;
     }
 
     const statistics = {
       overall: {
         totalAttempts,
         totalCorrect,
-        correctRate: totalAttempts > 0 ? (totalCorrect / totalAttempts) * 100 : 0,
+        correctRate:
+          totalAttempts > 0 ? (totalCorrect / totalAttempts) * 100 : 0,
         averageScore: totalAttempts > 0 ? totalScore / totalAttempts : 0,
       },
       byCategory: categoryStats,
@@ -204,13 +220,16 @@ export class ExportService {
     return csv;
   }
 
-  async exportQuizzesByCategory(category: string, format: 'csv' | 'json' = 'csv'): Promise<string | object[]> {
+  async exportQuizzesByCategory(
+    category: string,
+    format: 'csv' | 'json' = 'csv',
+  ): Promise<string | object[]> {
     const quizzes = await this.quizRepository.find({
       where: { category, isActive: true },
       order: { createdAt: 'DESC' },
     });
 
-    const quizData = quizzes.map(quiz => ({
+    const quizData = quizzes.map((quiz) => ({
       id: quiz.id,
       title: quiz.title,
       question: quiz.question,

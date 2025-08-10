@@ -32,10 +32,12 @@ export class QuizAttemptService {
     private quizRepository: Repository<Quiz>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  ) { }
+  ) {}
 
   // クイズ解答を記録
-  async createAttempt(createAttemptDto: CreateQuizAttemptDto): Promise<QuizAttempt> {
+  async createAttempt(
+    createAttemptDto: CreateQuizAttemptDto,
+  ): Promise<QuizAttempt> {
     const quiz = await this.quizRepository.findOne({
       where: { id: createAttemptDto.quizId },
     });
@@ -49,7 +51,10 @@ export class QuizAttemptService {
 
     // 過去の解答回数を取得
     const previousAttempts = await this.attemptRepository.count({
-      where: { quiz: { id: createAttemptDto.quizId }, user: { id: createAttemptDto.userId } },
+      where: {
+        quiz: { id: createAttemptDto.quizId },
+        user: { id: createAttemptDto.userId },
+      },
     });
 
     // 次回復習日を計算（間隔反復学習アルゴリズム）
@@ -67,7 +72,10 @@ export class QuizAttemptService {
       timeSpent: createAttemptDto.timeSpent || 0,
       attemptNumber: previousAttempts + 1,
       nextReviewDate,
-      intervalDays: this.calculateIntervalDays(createAttemptDto.isCorrect, previousAttempts),
+      intervalDays: this.calculateIntervalDays(
+        createAttemptDto.isCorrect,
+        previousAttempts,
+      ),
       confidence: createAttemptDto.confidence || 0.5,
     });
 
@@ -75,18 +83,25 @@ export class QuizAttemptService {
   }
 
   // ユーザーのクイズ統計情報を取得
-  async getQuizStatistics(userId: string, quizId: string): Promise<QuizStatistics> {
+  async getQuizStatistics(
+    userId: string,
+    quizId: string,
+  ): Promise<QuizStatistics> {
     const attempts = await this.attemptRepository.find({
       where: { user: { id: userId }, quiz: { id: quizId } },
       order: { createdAt: 'DESC' },
     });
 
     const totalAttempts = attempts.length;
-    const correctAttempts = attempts.filter(attempt => attempt.isCorrect).length;
+    const correctAttempts = attempts.filter(
+      (attempt) => attempt.isCorrect,
+    ).length;
     const accuracy = totalAttempts > 0 ? correctAttempts / totalAttempts : 0;
-    const averageTime = totalAttempts > 0
-      ? attempts.reduce((sum, attempt) => sum + attempt.timeSpent, 0) / totalAttempts
-      : 0;
+    const averageTime =
+      totalAttempts > 0
+        ? attempts.reduce((sum, attempt) => sum + attempt.timeSpent, 0) /
+          totalAttempts
+        : 0;
 
     const lastAttempt = attempts[0];
 
@@ -112,7 +127,7 @@ export class QuizAttemptService {
       .orderBy('attempt.nextReviewDate', 'ASC')
       .getMany();
 
-    return attempts.map(attempt => attempt.quiz);
+    return attempts.map((attempt) => attempt.quiz);
   }
 
   // タグ別のクイズ統計
@@ -134,14 +149,20 @@ export class QuizAttemptService {
       tag,
       totalAttempts: parseInt(result.totalAttempts) || 0,
       correctAttempts: parseInt(result.correctAttempts) || 0,
-      accuracy: result.totalAttempts > 0 ? result.correctAttempts / result.totalAttempts : 0,
+      accuracy:
+        result.totalAttempts > 0
+          ? result.correctAttempts / result.totalAttempts
+          : 0,
       averageTime: parseFloat(result.averageTime) || 0,
       averageConfidence: parseFloat(result.averageConfidence) || 0,
     };
   }
 
   // カテゴリ別のクイズ統計
-  async getStatisticsByCategory(userId: string, category: string): Promise<any> {
+  async getStatisticsByCategory(
+    userId: string,
+    category: string,
+  ): Promise<any> {
     const result = await this.attemptRepository
       .createQueryBuilder('attempt')
       .leftJoin('attempt.quiz', 'quiz')
@@ -159,16 +180,27 @@ export class QuizAttemptService {
       category,
       totalAttempts: parseInt(result.totalAttempts) || 0,
       correctAttempts: parseInt(result.correctAttempts) || 0,
-      accuracy: result.totalAttempts > 0 ? result.correctAttempts / result.totalAttempts : 0,
+      accuracy:
+        result.totalAttempts > 0
+          ? result.correctAttempts / result.totalAttempts
+          : 0,
       averageTime: parseFloat(result.averageTime) || 0,
       averageConfidence: parseFloat(result.averageConfidence) || 0,
     };
   }
 
   // 間隔反復学習アルゴリズム：次回復習日を計算
-  private calculateNextReviewDate(isCorrect: boolean, attemptCount: number, confidence: number): Date {
+  private calculateNextReviewDate(
+    isCorrect: boolean,
+    attemptCount: number,
+    confidence: number,
+  ): Date {
     const now = new Date();
-    const intervalDays = this.calculateIntervalDays(isCorrect, attemptCount, confidence);
+    const intervalDays = this.calculateIntervalDays(
+      isCorrect,
+      attemptCount,
+      confidence,
+    );
 
     const nextDate = new Date(now);
     nextDate.setDate(nextDate.getDate() + intervalDays);
@@ -177,7 +209,11 @@ export class QuizAttemptService {
   }
 
   // 復習間隔を計算（間隔反復学習）
-  private calculateIntervalDays(isCorrect: boolean, attemptCount: number, confidence: number = 0.5): number {
+  private calculateIntervalDays(
+    isCorrect: boolean,
+    attemptCount: number,
+    confidence: number = 0.5,
+  ): number {
     if (!isCorrect) {
       // 間違えた場合は短い間隔で復習
       return Math.max(1, Math.floor(confidence * 3));
@@ -191,7 +227,10 @@ export class QuizAttemptService {
   }
 
   // ユーザーの全クイズ解答履歴を取得
-  async getUserAttempts(userId: string, limit: number = 50): Promise<QuizAttempt[]> {
+  async getUserAttempts(
+    userId: string,
+    limit: number = 50,
+  ): Promise<QuizAttempt[]> {
     return this.attemptRepository.find({
       where: { user: { id: userId } },
       relations: ['quiz'],
@@ -201,7 +240,10 @@ export class QuizAttemptService {
   }
 
   // 特定のクイズの解答履歴を取得
-  async getQuizAttempts(quizId: string, userId?: string): Promise<QuizAttempt[]> {
+  async getQuizAttempts(
+    quizId: string,
+    userId?: string,
+  ): Promise<QuizAttempt[]> {
     const where: any = { quiz: { id: quizId } };
     if (userId) {
       where.user = { id: userId };

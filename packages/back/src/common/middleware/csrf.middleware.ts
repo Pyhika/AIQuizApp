@@ -29,7 +29,7 @@ export class CsrfMiddleware implements NestMiddleware {
 
   private generateToken(req: Request, res: Response): string {
     const token = crypto.randomBytes(this.TOKEN_LENGTH).toString('hex');
-    
+
     // Store in session
     if (req.session) {
       req.session.csrfToken = token;
@@ -57,9 +57,10 @@ export class CsrfMiddleware implements NestMiddleware {
     }
 
     // Get token from request (header or body)
-    const requestToken = req.headers[this.HEADER_NAME] as string
-      || req.body?._csrf
-      || req.query?._csrf as string;
+    const requestToken =
+      (req.headers[this.HEADER_NAME] as string) ||
+      req.body?._csrf ||
+      (req.query?._csrf as string);
 
     if (!requestToken) {
       return false;

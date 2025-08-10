@@ -13,7 +13,10 @@ export class OpenAIConfig {
   }
 
   // クイズ生成用のプロンプトテンプレート
-  static getQuizGenerationPrompt(content: string, questionCount: number = 5): string {
+  static getQuizGenerationPrompt(
+    content: string,
+    questionCount: number = 5,
+  ): string {
     return `
 以下のコンテンツを基に、${questionCount}問のクイズを生成してください。
 以下のJSON形式で回答してください：

@@ -44,7 +44,7 @@ export class TokenBlacklistService implements OnModuleDestroy {
   async storeRefreshToken(
     userId: string,
     refreshToken: string,
-    expiresIn: number
+    expiresIn: number,
   ): Promise<void> {
     const key = `${this.REFRESH_PREFIX}${userId}`;
     await this.redis.setex(key, expiresIn, refreshToken);
@@ -73,7 +73,7 @@ export class TokenBlacklistService implements OnModuleDestroy {
     // Get all tokens for this user (would need to maintain a separate index)
     const pattern = `${this.PREFIX}user:${userId}:*`;
     const keys = await this.redis.keys(pattern);
-    
+
     if (keys.length > 0) {
       await this.redis.del(...keys);
     }

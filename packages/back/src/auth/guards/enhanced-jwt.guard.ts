@@ -1,4 +1,8 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TokenBlacklistService } from '../services/token-blacklist.service';
 
@@ -62,7 +66,7 @@ export class EnhancedJwtAuthGuard extends AuthGuard('jwt') {
     // Check for request anomalies
     const referer = request.headers['referer'];
     const origin = request.headers['origin'];
-    
+
     // Add more security checks as needed
   }
 }

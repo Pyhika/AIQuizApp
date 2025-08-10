@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Quiz } from './quiz.entity';
 import { QuizAttempt } from './quiz-attempt.entity';
@@ -39,10 +46,10 @@ export class User {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @OneToMany(() => Quiz, quiz => quiz.user)
+  @OneToMany(() => Quiz, (quiz) => quiz.user)
   quizzes: Quiz[];
 
-  @OneToMany(() => QuizAttempt, attempt => attempt.user)
+  @OneToMany(() => QuizAttempt, (attempt) => attempt.user)
   quizAttempts: QuizAttempt[];
 
   @CreateDateColumn()

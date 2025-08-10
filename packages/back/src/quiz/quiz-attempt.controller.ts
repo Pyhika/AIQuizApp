@@ -7,21 +7,29 @@ import {
   Query,
   BadRequestException,
 } from '@nestjs/common';
-import { QuizAttemptService, CreateQuizAttemptDto, QuizStatistics } from './quiz-attempt.service';
+import {
+  QuizAttemptService,
+  CreateQuizAttemptDto,
+  QuizStatistics,
+} from './quiz-attempt.service';
 import { QuizAttempt } from '../entities/quiz-attempt.entity';
 import { Quiz } from '../entities/quiz.entity';
 
 @Controller('quiz-attempt')
 export class QuizAttemptController {
-  constructor(private readonly quizAttemptService: QuizAttemptService) { }
+  constructor(private readonly quizAttemptService: QuizAttemptService) {}
 
   // クイズ解答を記録
   @Post('submit')
-  async submitAnswer(@Body() createAttemptDto: CreateQuizAttemptDto): Promise<QuizAttempt> {
+  async submitAnswer(
+    @Body() createAttemptDto: CreateQuizAttemptDto,
+  ): Promise<QuizAttempt> {
     try {
       return await this.quizAttemptService.createAttempt(createAttemptDto);
     } catch (error) {
-      throw new BadRequestException(`解答の記録に失敗しました: ${error.message}`);
+      throw new BadRequestException(
+        `解答の記録に失敗しました: ${error.message}`,
+      );
     }
   }
 
@@ -81,21 +89,26 @@ export class QuizAttemptController {
   @Get('dashboard/:userId')
   async getLearningDashboard(@Param('userId') userId: string): Promise<any> {
     const attempts = await this.quizAttemptService.getUserAttempts(userId, 100);
-    const reviewQuizzes = await this.quizAttemptService.getQuizzesForReview(userId);
+    const reviewQuizzes =
+      await this.quizAttemptService.getQuizzesForReview(userId);
 
     // 全体的な統計情報を計算
     const totalAttempts = attempts.length;
-    const correctAttempts = attempts.filter(attempt => attempt.isCorrect).length;
+    const correctAttempts = attempts.filter(
+      (attempt) => attempt.isCorrect,
+    ).length;
     const accuracy = totalAttempts > 0 ? correctAttempts / totalAttempts : 0;
-    const averageTime = totalAttempts > 0
-      ? attempts.reduce((sum, attempt) => sum + attempt.timeSpent, 0) / totalAttempts
-      : 0;
+    const averageTime =
+      totalAttempts > 0
+        ? attempts.reduce((sum, attempt) => sum + attempt.timeSpent, 0) /
+          totalAttempts
+        : 0;
 
     // 最近の学習活動（過去7日）
     const recentDate = new Date();
     recentDate.setDate(recentDate.getDate() - 7);
-    const recentAttempts = attempts.filter(attempt =>
-      new Date(attempt.createdAt) >= recentDate
+    const recentAttempts = attempts.filter(
+      (attempt) => new Date(attempt.createdAt) >= recentDate,
     );
 
     // 学習ストリーク計算
@@ -123,9 +136,12 @@ export class QuizAttemptController {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - daysParsed);
 
-    const attempts = await this.quizAttemptService.getUserAttempts(userId, 1000);
-    const filteredAttempts = attempts.filter(attempt =>
-      new Date(attempt.createdAt) >= startDate
+    const attempts = await this.quizAttemptService.getUserAttempts(
+      userId,
+      1000,
+    );
+    const filteredAttempts = attempts.filter(
+      (attempt) => new Date(attempt.createdAt) >= startDate,
     );
 
     // 日別の学習活動を集計
@@ -149,15 +165,16 @@ export class QuizAttemptController {
     today.setHours(0, 0, 0, 0);
 
     // 日付順にソート
-    const sortedAttempts = attempts.sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    const sortedAttempts = attempts.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
 
     // 連続学習日数を計算
     let currentDate = new Date(today);
     const studyDates = new Set<number>();
 
-    sortedAttempts.forEach(attempt => {
+    sortedAttempts.forEach((attempt) => {
       const attemptDate = new Date(attempt.createdAt);
       attemptDate.setHours(0, 0, 0, 0);
       studyDates.add(attemptDate.getTime());
@@ -170,7 +187,10 @@ export class QuizAttemptController {
       if (studyDate.getTime() === currentDate.getTime()) {
         streak++;
         currentDate.setDate(currentDate.getDate() - 1);
-      } else if (i === 0 && studyDate.getTime() === currentDate.getTime() - 86400000) {
+      } else if (
+        i === 0 &&
+        studyDate.getTime() === currentDate.getTime() - 86400000
+      ) {
         // 昨日の学習から始まる場合
         streak++;
         currentDate = new Date(studyDate);
@@ -201,7 +221,7 @@ export class QuizAttemptController {
     }
 
     // 解答データを日別に集計
-    attempts.forEach(attempt => {
+    attempts.forEach((attempt) => {
       const dateKey = new Date(attempt.createdAt).toISOString().split('T')[0];
       if (dailyMap.has(dateKey)) {
         const dayStats = dailyMap.get(dateKey);
@@ -209,7 +229,8 @@ export class QuizAttemptController {
         if (attempt.isCorrect) {
           dayStats.correct++;
         }
-        dayStats.accuracy = dayStats.attempts > 0 ? dayStats.correct / dayStats.attempts : 0;
+        dayStats.accuracy =
+          dayStats.attempts > 0 ? dayStats.correct / dayStats.attempts : 0;
       }
     });
 
@@ -219,7 +240,7 @@ export class QuizAttemptController {
   // 平均正解率を計算
   private calculateAverageAccuracy(attempts: QuizAttempt[]): number {
     if (attempts.length === 0) return 0;
-    const correct = attempts.filter(attempt => attempt.isCorrect).length;
+    const correct = attempts.filter((attempt) => attempt.isCorrect).length;
     return Math.round((correct / attempts.length) * 100);
   }
 
@@ -227,15 +248,23 @@ export class QuizAttemptController {
   private calculateImprovementTrend(attempts: QuizAttempt[]): string {
     if (attempts.length < 10) return 'データ不足';
 
-    const sortedAttempts = attempts.sort((a, b) =>
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    const sortedAttempts = attempts.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
 
-    const firstHalf = sortedAttempts.slice(0, Math.floor(sortedAttempts.length / 2));
-    const secondHalf = sortedAttempts.slice(Math.floor(sortedAttempts.length / 2));
+    const firstHalf = sortedAttempts.slice(
+      0,
+      Math.floor(sortedAttempts.length / 2),
+    );
+    const secondHalf = sortedAttempts.slice(
+      Math.floor(sortedAttempts.length / 2),
+    );
 
-    const firstHalfAccuracy = firstHalf.filter(a => a.isCorrect).length / firstHalf.length;
-    const secondHalfAccuracy = secondHalf.filter(a => a.isCorrect).length / secondHalf.length;
+    const firstHalfAccuracy =
+      firstHalf.filter((a) => a.isCorrect).length / firstHalf.length;
+    const secondHalfAccuracy =
+      secondHalf.filter((a) => a.isCorrect).length / secondHalf.length;
 
     const improvement = secondHalfAccuracy - firstHalfAccuracy;
 

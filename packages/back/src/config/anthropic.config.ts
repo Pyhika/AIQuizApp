@@ -13,7 +13,10 @@ export class AnthropicConfig {
   }
 
   // クイズ生成用のプロンプトテンプレート（OpenAIConfig と同じ形式を利用）
-  static getQuizGenerationPrompt(content: string, questionCount: number = 5): string {
+  static getQuizGenerationPrompt(
+    content: string,
+    questionCount: number = 5,
+  ): string {
     return `
 以下のコンテンツを基に、${questionCount}問のクイズを生成してください。
 以下のJSON形式で回答してください：

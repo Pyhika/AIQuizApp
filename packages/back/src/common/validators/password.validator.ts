@@ -1,4 +1,8 @@
-import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -11,7 +15,7 @@ export class StrongPasswordValidator implements ValidatorConstraintInterface {
     if (!password) return false;
 
     const config = this.configService.get('security.password');
-    
+
     // Check minimum length
     if (password.length < config.minLength) {
       return false;
@@ -34,7 +38,9 @@ export class StrongPasswordValidator implements ValidatorConstraintInterface {
 
     // Check for special characters
     if (config.requireSpecialChars) {
-      const specialCharsRegex = new RegExp(`[${config.specialChars.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}]`);
+      const specialCharsRegex = new RegExp(
+        `[${config.specialChars.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}]`,
+      );
       if (!specialCharsRegex.test(password)) {
         return false;
       }
@@ -42,11 +48,21 @@ export class StrongPasswordValidator implements ValidatorConstraintInterface {
 
     // Check for common passwords
     const commonPasswords = [
-      'password', '12345678', 'qwerty', 'abc123', 'password123',
-      'admin', 'letmein', 'welcome', 'monkey', '1234567890'
+      'password',
+      '12345678',
+      'qwerty',
+      'abc123',
+      'password123',
+      'admin',
+      'letmein',
+      'welcome',
+      'monkey',
+      '1234567890',
     ];
-    
-    if (commonPasswords.some(common => password.toLowerCase().includes(common))) {
+
+    if (
+      commonPasswords.some((common) => password.toLowerCase().includes(common))
+    ) {
       return false;
     }
 
@@ -56,8 +72,18 @@ export class StrongPasswordValidator implements ValidatorConstraintInterface {
     }
 
     // Check for keyboard patterns
-    const keyboardPatterns = ['qwerty', 'asdfgh', 'zxcvbn', '123456', 'qwertyuiop'];
-    if (keyboardPatterns.some(pattern => password.toLowerCase().includes(pattern))) {
+    const keyboardPatterns = [
+      'qwerty',
+      'asdfgh',
+      'zxcvbn',
+      '123456',
+      'qwertyuiop',
+    ];
+    if (
+      keyboardPatterns.some((pattern) =>
+        password.toLowerCase().includes(pattern),
+      )
+    ) {
       return false;
     }
 
@@ -82,18 +108,19 @@ export function calculatePasswordStrength(password: string): {
   if (password.length >= 8) score += 1;
   if (password.length >= 12) score += 1;
   if (password.length >= 16) score += 1;
-  else if (password.length < 12) feedback.push('Consider using a longer password');
+  else if (password.length < 12)
+    feedback.push('Consider using a longer password');
 
   // Character variety
   if (/[a-z]/.test(password)) score += 1;
   else feedback.push('Add lowercase letters');
-  
+
   if (/[A-Z]/.test(password)) score += 1;
   else feedback.push('Add uppercase letters');
-  
+
   if (/\d/.test(password)) score += 1;
   else feedback.push('Add numbers');
-  
+
   if (/[^a-zA-Z0-9]/.test(password)) score += 1;
   else feedback.push('Add special characters');
 
@@ -107,6 +134,6 @@ export function calculatePasswordStrength(password: string): {
 
   return {
     score: Math.min(score, 10),
-    feedback
+    feedback,
   };
 }

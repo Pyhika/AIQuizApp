@@ -1,4 +1,9 @@
-import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from '@nestjs/common';
+import {
+  PipeTransform,
+  Injectable,
+  ArgumentMetadata,
+  BadRequestException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -6,11 +11,16 @@ export class SanitizationPipe implements PipeTransform {
   private forbiddenPatterns: RegExp[];
 
   constructor(private configService: ConfigService) {
-    this.forbiddenPatterns = this.configService.get('security.validation.forbiddenPatterns') || [];
+    this.forbiddenPatterns =
+      this.configService.get('security.validation.forbiddenPatterns') || [];
   }
 
   transform(value: any, metadata: ArgumentMetadata) {
-    if (metadata.type === 'body' || metadata.type === 'query' || metadata.type === 'param') {
+    if (
+      metadata.type === 'body' ||
+      metadata.type === 'query' ||
+      metadata.type === 'param'
+    ) {
       return this.sanitize(value);
     }
     return value;
@@ -20,11 +30,11 @@ export class SanitizationPipe implements PipeTransform {
     if (typeof obj === 'string') {
       return this.sanitizeString(obj);
     }
-    
+
     if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitize(item));
+      return obj.map((item) => this.sanitize(item));
     }
-    
+
     if (obj && typeof obj === 'object') {
       const sanitized: any = {};
       for (const key in obj) {
@@ -39,7 +49,7 @@ export class SanitizationPipe implements PipeTransform {
       }
       return sanitized;
     }
-    
+
     return obj;
   }
 
@@ -66,7 +76,8 @@ export class SanitizationPipe implements PipeTransform {
       .replace(/\//g, '&#x2F;');
 
     // Remove dangerous protocols
-    sanitized = sanitized.replace(/javascript:/gi, '')
+    sanitized = sanitized
+      .replace(/javascript:/gi, '')
       .replace(/data:text\/html/gi, '')
       .replace(/vbscript:/gi, '')
       .replace(/file:/gi, '');
@@ -75,7 +86,11 @@ export class SanitizationPipe implements PipeTransform {
     sanitized = sanitized.trim();
 
     // Check URL length
-    if (sanitized.match(/^https?:\/\//) && sanitized.length > this.configService.get('security.validation.maxUrlLength')) {
+    if (
+      sanitized.match(/^https?:\/\//) &&
+      sanitized.length >
+        this.configService.get('security.validation.maxUrlLength')
+    ) {
       throw new BadRequestException('URL exceeds maximum allowed length');
     }
 

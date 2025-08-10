@@ -13,6 +13,8 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
+import '../types/express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { QuizService, CreateQuizDto, GenerateQuizDto } from './quiz.service';
 import { Quiz, QuizDifficulty } from '../entities/quiz.entity';
@@ -24,7 +26,7 @@ export class QuizController {
   constructor(
     private readonly quizService: QuizService,
     private readonly difficultyService: QuizDifficultyService,
-  ) { }
+  ) {}
 
   // 全クイズ取得
   @Get()
@@ -43,7 +45,7 @@ export class QuizController {
     const filters: any = {};
 
     if (tags) {
-      filters.tags = tags.split(',').map(tag => tag.trim());
+      filters.tags = tags.split(',').map((tag) => tag.trim());
     }
     if (category) {
       filters.category = category;
@@ -75,7 +77,7 @@ export class QuizController {
   // タグでクイズ検索
   @Get('tags/:tags')
   async getQuizzesByTags(@Param('tags') tagsParam: string): Promise<Quiz[]> {
-    const tags = tagsParam.split(',').map(tag => tag.trim());
+    const tags = tagsParam.split(',').map((tag) => tag.trim());
     return this.quizService.findByTags(tags);
   }
 
@@ -91,13 +93,17 @@ export class QuizController {
 
   // カテゴリ別クイズ取得
   @Get('category/:category')
-  async getQuizzesByCategory(@Param('category') category: string): Promise<Quiz[]> {
+  async getQuizzesByCategory(
+    @Param('category') category: string,
+  ): Promise<Quiz[]> {
     return this.quizService.findByCategory(category);
   }
 
   // 難易度別クイズ取得
   @Get('difficulty/:difficulty')
-  async getQuizzesByDifficulty(@Param('difficulty') difficulty: QuizDifficulty): Promise<Quiz[]> {
+  async getQuizzesByDifficulty(
+    @Param('difficulty') difficulty: QuizDifficulty,
+  ): Promise<Quiz[]> {
     return this.quizService.findByDifficulty(difficulty);
   }
 
@@ -105,20 +111,24 @@ export class QuizController {
   @Get('adaptive')
   @UseGuards(JwtAuthGuard)
   async getAdaptiveQuizzes(
-    @Request() req,
+    @Request() req: ExpressRequest,
     @Query('category') category?: string,
     @Query('limit') limit?: string,
   ): Promise<Quiz[]> {
-    const userId = req.user.userId;
+    const userId = req.user?.userId || req.user?.id;
     const quizLimit = limit ? parseInt(limit) : 10;
-    return this.difficultyService.getAdaptiveQuizzes(userId, category, quizLimit);
+    return this.difficultyService.getAdaptiveQuizzes(
+      userId,
+      category,
+      quizLimit,
+    );
   }
 
   // ユーザーの学習統計を取得
   @Get('statistics')
   @UseGuards(JwtAuthGuard)
-  async getUserStatistics(@Request() req) {
-    const userId = req.user.userId;
+  async getUserStatistics(@Request() req: ExpressRequest) {
+    const userId = req.user?.userId || req.user?.id;
     return this.difficultyService.getUserStatistics(userId);
   }
 
@@ -130,7 +140,9 @@ export class QuizController {
 
   // テキストからAIクイズ生成
   @Post('generate/text')
-  async generateQuizFromText(@Body() generateQuizDto: GenerateQuizDto): Promise<Quiz[]> {
+  async generateQuizFromText(
+    @Body() generateQuizDto: GenerateQuizDto,
+  ): Promise<Quiz[]> {
     return this.quizService.generateQuizFromText(generateQuizDto);
   }
 
@@ -139,7 +151,8 @@ export class QuizController {
   @UseInterceptors(FileInterceptor('file'))
   async generateQuizFromPDF(
     @UploadedFile() file: Express.Multer.File,
-    @Body() options?: {
+    @Body()
+    options?: {
       questionCount?: string;
       difficulty?: QuizDifficulty;
       category?: string;
@@ -156,18 +169,26 @@ export class QuizController {
 
     try {
       // PDFからテキストを抽出
-      const extractedText = await this.quizService.extractTextFromPDF(file.buffer);
+      const extractedText = await this.quizService.extractTextFromPDF(
+        file.buffer,
+      );
 
       // 抽出したテキストからクイズ生成
       return this.quizService.generateQuizFromText({
         content: extractedText,
-        questionCount: options?.questionCount ? parseInt(options.questionCount) : 5,
+        questionCount: options?.questionCount
+          ? parseInt(options.questionCount)
+          : 5,
         difficulty: options?.difficulty,
         category: options?.category,
-        tags: options?.tags ? options.tags.split(',').map(tag => tag.trim()) : [],
+        tags: options?.tags
+          ? options.tags.split(',').map((tag) => tag.trim())
+          : [],
       });
     } catch (error) {
-      throw new BadRequestException(`PDFからのクイズ生成に失敗しました: ${error.message}`);
+      throw new BadRequestException(
+        `PDFからのクイズ生成に失敗しました: ${error.message}`,
+      );
     }
   }
 
@@ -176,7 +197,8 @@ export class QuizController {
   @UseInterceptors(FileInterceptor('file'))
   async generateQuizFromImage(
     @UploadedFile() file: Express.Multer.File,
-    @Body() options?: {
+    @Body()
+    options?: {
       questionCount?: string;
       difficulty?: QuizDifficulty;
       category?: string;
@@ -193,13 +215,19 @@ export class QuizController {
 
     try {
       return this.quizService.generateQuizFromImage(file.buffer, {
-        questionCount: options?.questionCount ? parseInt(options.questionCount) : 3,
+        questionCount: options?.questionCount
+          ? parseInt(options.questionCount)
+          : 3,
         difficulty: options?.difficulty,
         category: options?.category,
-        tags: options?.tags ? options.tags.split(',').map(tag => tag.trim()) : [],
+        tags: options?.tags
+          ? options.tags.split(',').map((tag) => tag.trim())
+          : [],
       });
     } catch (error) {
-      throw new BadRequestException(`画像からのクイズ生成に失敗しました: ${error.message}`);
+      throw new BadRequestException(
+        `画像からのクイズ生成に失敗しました: ${error.message}`,
+      );
     }
   }
 

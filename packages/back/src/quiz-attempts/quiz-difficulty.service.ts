@@ -30,8 +30,10 @@ export class QuizDifficultyService {
       return UserLevel.BEGINNER;
     }
 
-    const averageScore = recentAttempts.reduce((sum, attempt) => sum + attempt.score, 0) / recentAttempts.length;
-    
+    const averageScore =
+      recentAttempts.reduce((sum, attempt) => sum + attempt.score, 0) /
+      recentAttempts.length;
+
     if (averageScore >= 80) {
       return UserLevel.ADVANCED;
     } else if (averageScore >= 60) {
@@ -41,58 +43,64 @@ export class QuizDifficultyService {
     }
   }
 
-  async getAdaptiveQuizzes(userId: string, category?: string, limit: number = 10): Promise<Quiz[]> {
+  async getAdaptiveQuizzes(
+    userId: string,
+    category?: string,
+    limit: number = 10,
+  ): Promise<Quiz[]> {
     const userLevel = await this.calculateUserLevel(userId);
-    
+
     const difficultyDistribution = this.getDifficultyDistribution(userLevel);
-    
+
     const quizzes: Quiz[] = [];
-    
+
     for (const [difficulty, count] of Object.entries(difficultyDistribution)) {
       const query = this.quizRepository
         .createQueryBuilder('quiz')
         .where('quiz.difficulty = :difficulty', { difficulty })
         .andWhere('quiz.isActive = :isActive', { isActive: true });
-      
+
       if (category) {
         query.andWhere('quiz.category = :category', { category });
       }
-      
+
       const difficultyQuizzes = await query
         .orderBy('RANDOM()')
         .take(count)
         .getMany();
-      
+
       quizzes.push(...difficultyQuizzes);
     }
-    
+
     if (quizzes.length < limit) {
       const query = this.quizRepository
         .createQueryBuilder('quiz')
         .where('quiz.isActive = :isActive', { isActive: true });
-      
+
       if (category) {
         query.andWhere('quiz.category = :category', { category });
       }
-      
+
       if (quizzes.length > 0) {
-        query.andWhere('quiz.id NOT IN (:...excludeIds)', { 
-          excludeIds: quizzes.map(q => q.id)
+        query.andWhere('quiz.id NOT IN (:...excludeIds)', {
+          excludeIds: quizzes.map((q) => q.id),
         });
       }
-      
+
       const remainingQuizzes = await query
         .orderBy('RANDOM()')
         .take(limit - quizzes.length)
         .getMany();
-      
+
       quizzes.push(...remainingQuizzes);
     }
-    
+
     return quizzes.sort(() => Math.random() - 0.5).slice(0, limit);
   }
 
-  private getDifficultyDistribution(userLevel: UserLevel): Record<QuizDifficulty, number> {
+  private getDifficultyDistribution(
+    userLevel: UserLevel,
+  ): Record<QuizDifficulty, number> {
     switch (userLevel) {
       case UserLevel.BEGINNER:
         return {
@@ -123,15 +131,18 @@ export class QuizDifficultyService {
     });
 
     const totalAttempts = attempts.length;
-    const averageScore = totalAttempts > 0
-      ? attempts.reduce((sum, attempt) => sum + attempt.score, 0) / totalAttempts
-      : 0;
+    const averageScore =
+      totalAttempts > 0
+        ? attempts.reduce((sum, attempt) => sum + attempt.score, 0) /
+          totalAttempts
+        : 0;
 
-    const difficultyScores: Record<string, { total: number; correct: number }> = {
-      easy: { total: 0, correct: 0 },
-      medium: { total: 0, correct: 0 },
-      hard: { total: 0, correct: 0 },
-    };
+    const difficultyScores: Record<string, { total: number; correct: number }> =
+      {
+        easy: { total: 0, correct: 0 },
+        medium: { total: 0, correct: 0 },
+        hard: { total: 0, correct: 0 },
+      };
 
     for (const attempt of attempts) {
       if (attempt.quiz && attempt.quiz.difficulty) {
@@ -152,7 +163,7 @@ export class QuizDifficultyService {
       averageScore,
       userLevel,
       difficultyPerformance: difficultyScores,
-      recentProgress: attempts.slice(0, 5).map(attempt => ({
+      recentProgress: attempts.slice(0, 5).map((attempt) => ({
         date: attempt.startedAt,
         score: attempt.score,
         quizTitle: attempt.quiz?.title || 'Unknown Quiz',

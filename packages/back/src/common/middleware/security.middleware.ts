@@ -24,7 +24,7 @@ export class SecurityMiddleware implements NestMiddleware {
       this.session(req, res, () => {
         // Add security headers
         const headers = this.configService.get('security.headers');
-        Object.keys(headers).forEach(header => {
+        Object.keys(headers).forEach((header) => {
           res.setHeader(header, headers[header]);
         });
 
