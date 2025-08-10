@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Get, UseGuards, Request, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, ValidationPipe, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { User } from '../entities/user.entity';
 
@@ -32,5 +33,24 @@ export class AuthController {
     // JWTはサーバー側でセッションを管理しないため、
     // ログアウトはクライアント側でトークンを削除することで実現
     return { message: 'ログアウトしました' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @Request() req: any,
+    @Body(ValidationPipe) changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
+      throw new BadRequestException('新しいパスワードと確認用パスワードが一致しません');
+    }
+
+    await this.authService.changePassword(
+      req.user.id,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword,
+    );
+
+    return { message: 'パスワードが正常に変更されました' };
   }
 }

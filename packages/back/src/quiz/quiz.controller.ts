@@ -10,14 +10,21 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { QuizService, CreateQuizDto, GenerateQuizDto } from './quiz.service';
 import { Quiz, QuizDifficulty } from '../entities/quiz.entity';
+import { QuizDifficultyService } from '../quiz-attempts/quiz-difficulty.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('quiz')
 export class QuizController {
-  constructor(private readonly quizService: QuizService) { }
+  constructor(
+    private readonly quizService: QuizService,
+    private readonly difficultyService: QuizDifficultyService,
+  ) { }
 
   // 全クイズ取得
   @Get()
@@ -92,6 +99,27 @@ export class QuizController {
   @Get('difficulty/:difficulty')
   async getQuizzesByDifficulty(@Param('difficulty') difficulty: QuizDifficulty): Promise<Quiz[]> {
     return this.quizService.findByDifficulty(difficulty);
+  }
+
+  // ユーザーレベルに応じたアダプティブクイズ取得
+  @Get('adaptive')
+  @UseGuards(JwtAuthGuard)
+  async getAdaptiveQuizzes(
+    @Request() req,
+    @Query('category') category?: string,
+    @Query('limit') limit?: string,
+  ): Promise<Quiz[]> {
+    const userId = req.user.userId;
+    const quizLimit = limit ? parseInt(limit) : 10;
+    return this.difficultyService.getAdaptiveQuizzes(userId, category, quizLimit);
+  }
+
+  // ユーザーの学習統計を取得
+  @Get('statistics')
+  @UseGuards(JwtAuthGuard)
+  async getUserStatistics(@Request() req) {
+    const userId = req.user.userId;
+    return this.difficultyService.getUserStatistics(userId);
   }
 
   // 手動でクイズ作成
