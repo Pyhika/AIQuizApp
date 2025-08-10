@@ -1,3 +1,3 @@
-import ReviewScreen from '@/screens/ReviewScreen';
+import ReviewScreen from '../../screens/ReviewScreen';
 
 export default ReviewScreen;
