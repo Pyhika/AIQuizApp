@@ -9,7 +9,10 @@
       "Bash(curl:*)",
       "Bash(docker logs:*)",
       "Bash(docker restart:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(find:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
