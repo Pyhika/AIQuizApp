@@ -55,3 +55,5 @@ ${content}
 `;
   }
 }
+
+export default OpenAIConfig;
