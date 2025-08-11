@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(docker rm:*)",
+      "Bash(lsof:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(curl:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker restart:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

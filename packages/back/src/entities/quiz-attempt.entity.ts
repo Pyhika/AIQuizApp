@@ -37,6 +37,9 @@ export class QuizAttempt {
   @Column({ type: 'float', default: 0 })
   score: number; // 得点（0-100）
 
+  @Column({ type: 'boolean', default: false })
+  passed: boolean; // 合格したかどうか
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -54,8 +54,8 @@ export default registerAs('security', () => ({
 
   // Rate limiting
   rateLimit: {
-    ttl: parseInt(process.env.RATE_LIMIT_TTL, 10) || 60000, // milliseconds
-    limit: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
+    ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000', 10), // milliseconds
+    limit: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
     skipIf: (context: any) => {
       // Skip rate limiting for health checks
       return context.req.url === '/health';

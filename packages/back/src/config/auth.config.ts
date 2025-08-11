@@ -14,7 +14,7 @@ export default registerAs('auth', () => ({
   
   session: {
     secret: process.env.SESSION_SECRET || 'session_secret',
-    ttl: parseInt(process.env.SESSION_TTL, 10) || 86400,
+    ttl: parseInt(process.env.SESSION_TTL || '86400', 10),
   },
   
   oauth: {
