@@ -44,20 +44,26 @@ done
 echo "✅ Redis is ready"
 echo ""
 
-# Install backend dependencies if needed
-echo "📦 Checking backend dependencies..."
-cd packages/back
-if [ ! -d "node_modules" ]; then
-    echo "Installing backend dependencies..."
-    pnpm install
-fi
+# Check if backend is already running in Docker
+if docker ps | grep -q aiquizapp-backend; then
+    echo "🐳 Backend is already running in Docker container"
+    BACKEND_PID=""
+else
+    # Install backend dependencies if needed
+    echo "📦 Checking backend dependencies..."
+    cd packages/back
+    if [ ! -d "node_modules" ]; then
+        echo "Installing backend dependencies..."
+        pnpm install
+    fi
 
-# Start backend server in background
-echo "🖥️  Starting backend server..."
-pnpm run start:dev &
-BACKEND_PID=$!
-echo "Backend server PID: $BACKEND_PID"
-cd ../..
+    # Start backend server in background
+    echo "🖥️  Starting backend server..."
+    pnpm run start:dev &
+    BACKEND_PID=$!
+    echo "Backend server PID: $BACKEND_PID"
+    cd ../..
+fi
 
 # Wait for backend to be ready
 echo "⏳ Waiting for backend server..."
@@ -97,6 +103,10 @@ echo ""
 npx expo start
 
 # Cleanup on exit
-trap "echo '🛑 Stopping services...'; kill $BACKEND_PID 2>/dev/null; docker-compose down; exit" INT TERM
+if [ -n "$BACKEND_PID" ]; then
+    trap "echo '🛑 Stopping services...'; kill $BACKEND_PID 2>/dev/null; docker-compose down; exit" INT TERM
+else
+    trap "echo '🛑 Stopping services...'; docker-compose down; exit" INT TERM
+fi
 
 wait
