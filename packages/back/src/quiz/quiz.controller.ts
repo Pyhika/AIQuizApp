@@ -13,8 +13,6 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { Request as ExpressRequest } from 'express';
-import '../types/express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { QuizService, CreateQuizDto, GenerateQuizDto } from './quiz.service';
 import { Quiz, QuizDifficulty } from '../entities/quiz.entity';
@@ -111,7 +109,7 @@ export class QuizController {
   @Get('adaptive')
   @UseGuards(JwtAuthGuard)
   async getAdaptiveQuizzes(
-    @Request() req: ExpressRequest,
+    @Request() req,
     @Query('category') category?: string,
     @Query('limit') limit?: string,
   ): Promise<Quiz[]> {
@@ -127,7 +125,7 @@ export class QuizController {
   // ユーザーの学習統計を取得
   @Get('statistics')
   @UseGuards(JwtAuthGuard)
-  async getUserStatistics(@Request() req: ExpressRequest) {
+  async getUserStatistics(@Request() req) {
     const userId = req.user?.userId || req.user?.id;
     return this.difficultyService.getUserStatistics(userId);
   }
