@@ -38,7 +38,7 @@ export class UsersService {
     return user;
   }
 
-  async findByEmail(email: string): Promise<User | undefined> {
+  async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { email } });
   }
 
@@ -90,7 +90,7 @@ export class UsersService {
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
-      user.profileImage = null;
+      user.profileImage = '';
       return this.usersRepository.save(user);
     }
 
