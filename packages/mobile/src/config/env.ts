@@ -38,13 +38,13 @@ const ENV = {
 
 const getEnvironment = (): Environment => {
   const env = process.env.EXPO_PUBLIC_ENV || 'development';
-  
+
   if (env === 'production') {
     return ENV.production;
   } else if (env === 'staging') {
     return ENV.staging;
   }
-  
+
   return ENV.development;
 };
 
@@ -63,7 +63,7 @@ export const API_ENDPOINTS = {
   REFRESH: `${Config.API_URL}/auth/refresh`,
   PROFILE: `${Config.API_URL}/auth/profile`,
   LOGOUT: `${Config.API_URL}/auth/logout`,
-  
+
   // Quizzes
   QUIZZES: `${Config.API_URL}/quizzes`,
   QUIZ_BY_ID: (id: string) => `${Config.API_URL}/quizzes/${id}`,
@@ -71,23 +71,23 @@ export const API_ENDPOINTS = {
   QUIZ_UPDATE: (id: string) => `${Config.API_URL}/quizzes/${id}`,
   QUIZ_DELETE: (id: string) => `${Config.API_URL}/quizzes/${id}`,
   QUIZ_GENERATE: `${Config.API_URL}/quizzes/generate`,
-  
+
   // Quiz Attempts
   ATTEMPTS: `${Config.API_URL}/quiz-attempts`,
   ATTEMPT_BY_ID: (id: string) => `${Config.API_URL}/quiz-attempts/${id}`,
   ATTEMPT_CREATE: `${Config.API_URL}/quiz-attempts`,
   ATTEMPT_SUBMIT: (id: string) => `${Config.API_URL}/quiz-attempts/${id}/submit`,
-  
+
   // Learning
   LEARNING_STATS: `${Config.API_URL}/learning/stats`,
   LEARNING_PROGRESS: `${Config.API_URL}/learning/progress`,
   LEARNING_RECOMMENDATIONS: `${Config.API_URL}/learning/recommendations`,
-  
+
   // AI
   AI_CHAT: `${Config.API_URL}/ai/chat`,
   AI_GENERATE_QUIZ: `${Config.API_URL}/ai/generate-quiz`,
   AI_EXPLAIN: `${Config.API_URL}/ai/explain`,
-  
+
   // Upload
   UPLOAD_FILE: `${Config.API_URL}/upload/file`,
   UPLOAD_IMAGE: `${Config.API_URL}/upload/image`,

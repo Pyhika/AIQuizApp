@@ -3,11 +3,6 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { join } from 'path';
 import * as fs from 'fs';
-import { webcrypto } from 'crypto';
-
-if (!global.crypto) {
-  global.crypto = webcrypto as any;
-}
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

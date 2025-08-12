@@ -32,6 +32,7 @@ echo ""
 # Determine API URL
 if [[ "$MODE" == "lan" ]]; then
   API_URL="http://$LOCAL_IP:3000"
+  WS_URL="ws://$LOCAL_IP:3000"
 else
   if [[ -z "$PUBLIC_API_URL" ]]; then
     echo "ℹ️  WAN(トンネル)利用時は --api-url で外部から到達可能なAPIのURLを指定してください"
@@ -39,16 +40,25 @@ else
     exit 1
   fi
   API_URL="$PUBLIC_API_URL"
+  # Convert HTTP to WS, HTTPS to WSS
+  if [[ "$API_URL" == https://* ]]; then
+    WS_URL="${API_URL/https:/wss:}"
+  else
+    WS_URL="${API_URL/http:/ws:}"
+  fi
 fi
 
 # Update mobile .env with selected API URL
 cat > packages/mobile/.env <<EOF
 # Development environment variables for Expo
 EXPO_PUBLIC_API_URL=${API_URL}
+EXPO_PUBLIC_WS_URL=${WS_URL}
 EXPO_PUBLIC_ENV=development
 EOF
 
-echo "✅ Set mobile API URL: ${API_URL}"
+echo "✅ Set mobile environment:"
+echo "   API URL: ${API_URL}"
+echo "   WS URL : ${WS_URL}"
 echo ""
 
 # Check if Docker is running
