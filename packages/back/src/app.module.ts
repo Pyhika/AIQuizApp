@@ -1,3 +1,9 @@
+import { webcrypto } from 'crypto';
+
+if (!global.crypto) {
+  global.crypto = webcrypto as any;
+}
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';

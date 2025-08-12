@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// EXPO_PUBLIC_API_URL を優先。未設定時はローカル開発デフォルトにフォールバック
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+// EXPO_PUBLIC_API_URL を優先。未設定時はローカル開発デフォルト(3000)にフォールバック
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 export interface User {
   id: string;
