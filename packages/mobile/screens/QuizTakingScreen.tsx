@@ -69,7 +69,7 @@ export default function QuizTakingScreen() {
   const loadQuiz = async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch quiz data
       const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/quizzes/${quizId}`, {
         headers: {
@@ -78,7 +78,7 @@ export default function QuizTakingScreen() {
       });
 
       if (!response.ok) throw new Error('Failed to load quiz');
-      
+
       const data = await response.json();
       setQuiz(data);
 
@@ -95,7 +95,7 @@ export default function QuizTakingScreen() {
       });
 
       if (!attemptResponse.ok) throw new Error('Failed to start quiz attempt');
-      
+
       const attemptData = await attemptResponse.json();
       setAttemptId(attemptData.id);
     } catch (error) {
@@ -163,7 +163,7 @@ export default function QuizTakingScreen() {
           onPress: async () => {
             try {
               setIsSubmitting(true);
-              
+
               // Prepare answers array
               const answersArray = Array.from(answers.entries()).map(([questionId, answer]) => ({
                 questionId,
@@ -187,9 +187,9 @@ export default function QuizTakingScreen() {
               );
 
               if (!response.ok) throw new Error('Failed to submit quiz');
-              
+
               const result = await response.json();
-              
+
               // Navigate to results screen
               router.push({
                 pathname: '/quiz-result',
@@ -357,7 +357,7 @@ export default function QuizTakingScreen() {
               {currentQuestion?.difficulty?.toUpperCase()}
             </Text>
           </View>
-          
+
           <Text style={styles.questionText}>{currentQuestion?.question}</Text>
         </View>
 
