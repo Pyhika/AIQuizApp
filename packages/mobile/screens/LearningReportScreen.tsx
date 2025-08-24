@@ -33,7 +33,7 @@ const LearningReportScreen = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:3000/api/quiz-attempts/learning-report?period=${selectedPeriod}`,
+        `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/quiz-attempts/learning-report?period=${selectedPeriod}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

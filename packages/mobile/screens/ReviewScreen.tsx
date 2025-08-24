@@ -43,7 +43,7 @@ const ReviewScreen = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:3000/api/quiz-attempts/review-items?category=${selectedCategory}`,
+        `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/quiz-attempts/review-items?category=${selectedCategory}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

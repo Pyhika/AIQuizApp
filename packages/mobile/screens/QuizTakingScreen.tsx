@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProgressBar } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuthStore } from '../contexts/useAuthStore';
 
 interface Question {
   id: string;
@@ -39,7 +39,7 @@ interface Quiz {
 export default function QuizTakingScreen() {
   const router = useRouter();
   const { quizId } = useLocalSearchParams();
-  const { token } = useAuthContext();
+  const { token } = useAuthStore();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
