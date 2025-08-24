@@ -30,7 +30,15 @@ try {
   config.resolver.extraNodeModules = {
     ...(config.resolver.extraNodeModules || {}),
     'expo-router/entry': expoRouterEntry,
+    react: require.resolve('react', { paths: [projectRoot] }),
+    'react-dom': require.resolve('react-dom', { paths: [projectRoot] }),
   };
 } catch (_) { }
+
+// Alias missing native deps to shims for web/dev fallback
+config.resolver.alias = {
+  ...(config.resolver.alias || {}),
+  'react-native-keyboard-controller': path.resolve(projectRoot, 'shims/react-native-keyboard-controller.ts'),
+};
 
 module.exports = config;
