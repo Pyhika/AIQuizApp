@@ -31,6 +31,6 @@ try {
     ...(config.resolver.extraNodeModules || {}),
     'expo-router/entry': expoRouterEntry,
   };
-} catch (_) {}
+} catch (_) { }
 
 module.exports = config;
