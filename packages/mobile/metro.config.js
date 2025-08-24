@@ -20,4 +20,17 @@ config.resolver.blockList = [
   /packages\/back\//,
 ];
 
+// Enable pnpm + monorepo resolution and package exports
+config.resolver.unstable_enableSymlinks = true;
+config.resolver.unstable_enablePackageExports = true;
+
+// Help Metro resolve expo-router/entry correctly in monorepos
+try {
+  const expoRouterEntry = require.resolve('expo-router/entry', { paths: [projectRoot] });
+  config.resolver.extraNodeModules = {
+    ...(config.resolver.extraNodeModules || {}),
+    'expo-router/entry': expoRouterEntry,
+  };
+} catch (_) {}
+
 module.exports = config;
