@@ -32,6 +32,7 @@ try {
     'expo-router/entry': expoRouterEntry,
     react: require.resolve('react', { paths: [projectRoot] }),
     'react-dom': require.resolve('react-dom', { paths: [projectRoot] }),
+    'react-native-keyboard-controller': path.resolve(projectRoot, 'shims/react-native-keyboard-controller.ts'),
   };
 } catch (_) { }
 
