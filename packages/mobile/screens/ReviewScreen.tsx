@@ -4,7 +4,8 @@ import { Appbar, Card, useTheme, Text, Chip, ProgressBar, FAB, Surface, Badge, B
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
-import { useAuthStore } from '../contexts/useAuthStore';
+import { useAuthStore } from '@/contexts/useAuthStore';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ReviewItem {
   id: string;
@@ -34,24 +35,52 @@ const ReviewScreen = () => {
   const theme = useTheme();
   const router = useRouter();
   const { token } = useAuthStore();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchReviewItems();
-  }, [selectedCategory]);
+  }, [selectedCategory, user, token]);
 
   const fetchReviewItems = async () => {
+    if (!user || !token) {
+      return; // 認証準備が整うまで待機
+    }
     setIsLoading(true);
     try {
+      // Backendの実装に合わせて、ユーザーIDベースのレビュー対象取得
       const response = await axios.get(
-        `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/quiz-attempts/review-items?category=${selectedCategory}`,
+        `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/quiz-attempt/review/${user?.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      setReviewItems(response.data.items);
-      setReviewStats(response.data.stats);
+
+      // レスポンス: Quiz[] を画面用の形に軽く整形（カテゴリフィルタはクライアント側で簡易対応）
+      const quizzes: any[] = response.data || [];
+      const mapped: ReviewItem[] = quizzes
+        .filter((q) => selectedCategory === 'all' || q.category === selectedCategory)
+        .map((q) => ({
+          id: q.id,
+          questionId: q.id,
+          question: q.title || q.description || '復習項目',
+          category: q.category || 'その他',
+          lastReviewDate: new Date(),
+          nextReviewDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          reviewCount: 0,
+          difficulty: 'medium',
+          confidence: 60,
+          isOverdue: false,
+        }));
+
+      setReviewItems(mapped);
+      setReviewStats({
+        totalItems: mapped.length,
+        overdueItems: mapped.filter((i) => i.isOverdue).length,
+        todayItems: 0,
+        masteredItems: mapped.filter((i) => i.confidence >= 90).length,
+      });
     } catch (error) {
       console.error('Failed to fetch review items:', error);
       // デモデータを使用
@@ -160,11 +189,8 @@ const ReviewScreen = () => {
 
   const handleStartReview = (item: ReviewItem) => {
     router.push({
-      pathname: '/quiz-review',
-      params: {
-        questionId: item.questionId,
-        itemId: item.id,
-      },
+      pathname: '/quiz/[id]',
+      params: { id: item.questionId },
     });
   };
 
@@ -175,7 +201,7 @@ const ReviewScreen = () => {
       <Appbar.Header>
         <Appbar.BackAction onPress={() => router.back()} />
         <Appbar.Content title="復習" subtitle="間隔反復学習" />
-        <Appbar.Action icon="filter" onPress={() => {}} />
+        <Appbar.Action icon="filter" onPress={() => { }} />
       </Appbar.Header>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -210,9 +236,9 @@ const ReviewScreen = () => {
           </View>
         )}
 
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
           style={styles.categoryScroll}
           contentContainerStyle={styles.categoryContainer}
         >
@@ -246,8 +272,8 @@ const ReviewScreen = () => {
                       style={{ backgroundColor: getDifficultyColor(item.difficulty) }}
                       textStyle={{ color: theme.colors.onPrimary, fontSize: 10 }}
                     >
-                      {item.difficulty === 'easy' ? '簡単' : 
-                       item.difficulty === 'medium' ? '普通' : '難しい'}
+                      {item.difficulty === 'easy' ? '簡単' :
+                        item.difficulty === 'medium' ? '普通' : '難しい'}
                     </Chip>
                     <Text variant="bodySmall" style={styles.categoryText}>
                       {item.category}
@@ -255,17 +281,17 @@ const ReviewScreen = () => {
                   </View>
                   <View style={styles.cardHeaderRight}>
                     {item.isOverdue && (
-                      <MaterialCommunityIcons 
-                        name="alert-circle" 
-                        size={20} 
+                      <MaterialCommunityIcons
+                        name="alert-circle"
+                        size={20}
                         color={theme.colors.error}
                         style={{ marginRight: 8 }}
                       />
                     )}
-                    <Text 
-                      variant="bodySmall" 
-                      style={{ 
-                        color: item.isOverdue ? theme.colors.error : theme.colors.onSurfaceVariant 
+                    <Text
+                      variant="bodySmall"
+                      style={{
+                        color: item.isOverdue ? theme.colors.error : theme.colors.onSurfaceVariant
                       }}
                     >
                       {getNextReviewText(item.nextReviewDate)}
@@ -295,9 +321,9 @@ const ReviewScreen = () => {
 
                 <View style={styles.cardFooter}>
                   <View style={styles.reviewInfo}>
-                    <MaterialCommunityIcons 
-                      name="repeat" 
-                      size={16} 
+                    <MaterialCommunityIcons
+                      name="repeat"
+                      size={16}
                       color={theme.colors.onSurfaceVariant}
                     />
                     <Text variant="bodySmall" style={{ marginLeft: 4 }}>
@@ -319,9 +345,9 @@ const ReviewScreen = () => {
 
         {reviewItems.length === 0 && !isLoading && (
           <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons 
-              name="check-circle-outline" 
-              size={64} 
+            <MaterialCommunityIcons
+              name="check-circle-outline"
+              size={64}
               color={theme.colors.primary}
             />
             <Text variant="titleMedium" style={{ marginTop: 16 }}>
@@ -340,7 +366,7 @@ const ReviewScreen = () => {
         style={[styles.fab, { backgroundColor: theme.colors.primary }]}
         onPress={() => {
           if (reviewItems.length > 0) {
-            router.push('/batch-review');
+            router.push('/(tabs)/review');
           }
         }}
         visible={reviewItems.length > 0}

@@ -4,7 +4,8 @@ import { Appbar, Card, useTheme, Text, SegmentedButtons, ActivityIndicator, Surf
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
-import { useAuthStore } from '../contexts/useAuthStore';
+import { useAuthStore } from '@/contexts/useAuthStore';
+import { useAuth } from '../contexts/AuthContext';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -24,23 +25,44 @@ const LearningReportScreen = () => {
   const theme = useTheme();
   const router = useRouter();
   const { token } = useAuthStore();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchLearningData();
-  }, [selectedPeriod]);
+  }, [selectedPeriod, user, token]);
 
   const fetchLearningData = async () => {
+    if (!user || !token) {
+      return; // 認証準備が整うまで待機
+    }
     setIsLoading(true);
     try {
+      // Backendのダッシュボード/統計APIに合わせて取得
       const response = await axios.get(
-        `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/quiz-attempts/learning-report?period=${selectedPeriod}`,
+        `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/quiz-attempt/dashboard/${user?.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      setLearningData(response.data);
+      const dashboard = response.data || {};
+      // 画面の期待形式に簡易変換（デモ表示を維持）
+      setLearningData({
+        dailyProgress: (dashboard.dailyStats || []).map((d: any) => ({
+          date: d.date?.slice(5) || '',
+          score: Math.round((d.accuracy || 0) * 100),
+        })),
+        categoryScores: (dashboard.categoryStats || []).map((c: any) => ({
+          category: c.category || 'その他',
+          score: Math.round((c.accuracy || 0) * 100),
+          count: c.totalAttempts || 0,
+        })),
+        totalQuizzes: dashboard.totalAttempts || 0,
+        averageScore: Math.round((dashboard.accuracy || 0) * 100),
+        completionRate: 0,
+        streakDays: dashboard.learningStreak || 0,
+      });
     } catch (error) {
       console.error('Failed to fetch learning data:', error);
       // デモデータを使用
