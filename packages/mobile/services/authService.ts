@@ -1,7 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// EXPO_PUBLIC_API_URL を優先。未設定時はローカル開発デフォルト(3000)にフォールバック
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+import { apiClient, api, ApiError, NetworkError } from './api';
 
 export interface User {
   id: string;
@@ -13,6 +11,7 @@ export interface User {
 
 export interface AuthResponse {
   access_token: string;
+  refresh_token?: string;
   user: User;
 }
 
@@ -30,90 +29,87 @@ export interface LoginData {
 }
 
 export class AuthService {
-  private static TOKEN_KEY = 'auth_token';
+  private static USER_KEY = 'auth_user';
 
   static async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || '登録に失敗しました');
+    try {
+      const response = await api.auth.register(data) as AuthResponse;
+      
+      // トークンとユーザー情報を保存
+      await apiClient.setTokens(response.access_token, response.refresh_token);
+      await this.storeUser(response.user);
+      
+      return response;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(error.data?.message || error.message);
+      }
+      if (error instanceof NetworkError) {
+        throw new Error('ネットワークエラー: インターネット接続を確認してください');
+      }
+      throw new Error('登録に失敗しました');
     }
-
-    const authResponse: AuthResponse = await response.json();
-    await this.storeToken(authResponse.access_token);
-    return authResponse;
   }
 
   static async login(data: LoginData): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || 'ログインに失敗しました');
+    try {
+      const response = await api.auth.login(data.email, data.password) as AuthResponse;
+      
+      // トークンとユーザー情報を保存
+      await apiClient.setTokens(response.access_token, response.refresh_token);
+      await this.storeUser(response.user);
+      
+      return response;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.statusCode === 401) {
+          throw new Error('メールアドレスまたはパスワードが正しくありません');
+        }
+        throw new Error(error.data?.message || error.message);
+      }
+      if (error instanceof NetworkError) {
+        throw new Error('ネットワークエラー: インターネット接続を確認してください');
+      }
+      throw new Error('ログインに失敗しました');
     }
-
-    const authResponse: AuthResponse = await response.json();
-    await this.storeToken(authResponse.access_token);
-    return authResponse;
   }
 
   static async logout(): Promise<void> {
-    await AsyncStorage.removeItem(this.TOKEN_KEY);
-    // バックエンドのログアウトエンドポイントを呼ぶ（オプション）
-    const token = await this.getToken();
-    if (token) {
-      try {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-      } catch (error) {
-        console.log('ログアウトエラー:', error);
-      }
+    try {
+      await api.auth.logout();
+    } catch (error) {
+      console.log('ログアウトエラー:', error);
+    } finally {
+      // ローカルストレージをクリア
+      await apiClient.clearTokens();
+      await AsyncStorage.removeItem(this.USER_KEY);
     }
   }
 
   static async getProfile(): Promise<User> {
-    const token = await this.getToken();
-    if (!token) {
-      throw new Error('認証トークンがありません');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
+    try {
+      const user = await api.auth.profile() as User;
+      await this.storeUser(user);
+      return user;
+    } catch (error) {
+      if (error instanceof ApiError && error.statusCode === 401) {
         await this.logout();
-        throw new Error('認証が無効です');
+        throw new Error('認証が無効です。再度ログインしてください');
+      }
+      if (error instanceof NetworkError) {
+        // オフライン時はローカルのユーザー情報を返す
+        const localUser = await this.getStoredUser();
+        if (localUser) {
+          return localUser;
+        }
+        throw new Error('ネットワークエラー: インターネット接続を確認してください');
       }
       throw new Error('プロフィールの取得に失敗しました');
     }
-
-    return await response.json();
   }
 
   static async getToken(): Promise<string | null> {
-    return await AsyncStorage.getItem(this.TOKEN_KEY);
+    return await apiClient.getAccessToken();
   }
 
   static async isAuthenticated(): Promise<boolean> {
@@ -121,7 +117,12 @@ export class AuthService {
     return !!token;
   }
 
-  private static async storeToken(token: string): Promise<void> {
-    await AsyncStorage.setItem(this.TOKEN_KEY, token);
+  static async getStoredUser(): Promise<User | null> {
+    const userStr = await AsyncStorage.getItem(this.USER_KEY);
+    return userStr ? JSON.parse(userStr) : null;
+  }
+
+  private static async storeUser(user: User): Promise<void> {
+    await AsyncStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 }

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { Card, Title, Paragraph, Button, Avatar, Searchbar, Chip, ActivityIndicator, FAB } from 'react-native-paper';
 import { router } from 'expo-router';
+import { api, ApiError, NetworkError } from '../../services/api';
+import { AuthService } from '../../services/authService';
 
 interface Quiz {
   id: string;
@@ -41,8 +43,18 @@ export default function HomeScreen() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
-  // TODO: ユーザーIDは実際の認証システムから取得
-  const userId = 'user-123';
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    loadUserId();
+  }, []);
+  
+  const loadUserId = async () => {
+    const user = await AuthService.getStoredUser();
+    if (user) {
+      setUserId(user.id);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -67,73 +79,80 @@ export default function HomeScreen() {
 
   const loadQuizzes = async () => {
     try {
-      const response = await fetch('http://localhost:3001/quiz');
-      if (response.ok) {
-        const data = await response.json();
-        setQuizzes(data.slice(0, 10)); // 最新10件を表示
-      }
+      const data = await api.quiz.list();
+      setQuizzes(data.slice(0, 10)); // 最新10件を表示
     } catch (error) {
-      console.log('クイズの取得に失敗しました:', error);
+      if (error instanceof NetworkError) {
+        console.log('ネットワークエラー:', error.message);
+      } else {
+        console.log('クイズの取得に失敗しました:', error);
+      }
     }
   };
 
   const loadDashboardData = async () => {
+    if (!userId) return;
     try {
-      const response = await fetch(`http://localhost:3001/quiz-attempt/dashboard/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setDashboardData(data);
-      }
+      const data = await api.quizAttempt.dashboard(userId);
+      setDashboardData(data);
     } catch (error) {
-      console.log('ダッシュボードデータの取得に失敗しました:', error);
+      if (error instanceof NetworkError) {
+        console.log('ネットワークエラー:', error.message);
+      } else {
+        console.log('ダッシュボードデータの取得に失敗しました:', error);
+      }
     }
   };
 
   const loadRecentAttempts = async () => {
+    if (!userId) return;
     try {
-      const response = await fetch(`http://localhost:3001/quiz-attempt/history/${userId}?limit=5`);
-      if (response.ok) {
-        const data = await response.json();
-        setRecentAttempts(data);
-      }
+      const data = await api.quizAttempt.history(userId, 5);
+      setRecentAttempts(data);
     } catch (error) {
-      console.log('解答履歴の取得に失敗しました:', error);
+      if (error instanceof NetworkError) {
+        console.log('ネットワークエラー:', error.message);
+      } else {
+        console.log('解答履歴の取得に失敗しました:', error);
+      }
     }
   };
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3001/quiz/metadata/categories');
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableCategories(data.categories);
-      }
+      const data = await api.quiz.metadata.categories();
+      setAvailableCategories(data.categories || []);
     } catch (error) {
-      console.log('カテゴリの取得に失敗しました:', error);
+      if (error instanceof NetworkError) {
+        console.log('ネットワークエラー:', error.message);
+      } else {
+        console.log('カテゴリの取得に失敗しました:', error);
+      }
     }
   };
 
   const searchQuizzes = async () => {
     try {
-      let searchUrl = 'http://localhost:3001/quiz/search?';
-      const params = new URLSearchParams();
-
+      const params: any = {};
+      
       if (searchQuery.trim()) {
-        params.append('searchText', searchQuery.trim());
+        params.searchText = searchQuery.trim();
       }
-
+      
       if (selectedCategories.length > 0) {
-        params.append('category', selectedCategories[0]); // 単一カテゴリのみ
+        params.category = selectedCategories[0]; // 単一カテゴリのみ
       }
-
-      const response = await fetch(searchUrl + params.toString());
-      if (response.ok) {
-        const data = await response.json();
-        setQuizzes(data);
-      }
+      
+      const data = await api.quiz.search(params);
+      setQuizzes(data);
     } catch (error) {
-      console.log('検索に失敗しました:', error);
-      Alert.alert('エラー', '検索に失敗しました');
+      if (error instanceof NetworkError) {
+        Alert.alert('ネットワークエラー', 'インターネット接続を確認してください');
+      } else if (error instanceof ApiError) {
+        Alert.alert('エラー', error.message);
+      } else {
+        Alert.alert('エラー', '検索に失敗しました');
+      }
     }
   };
 

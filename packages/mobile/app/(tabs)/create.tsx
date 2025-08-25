@@ -4,6 +4,7 @@ import { Button, Card, Title, Paragraph, TextInput, Chip, Portal, Dialog, Menu, 
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import { api, ApiError, NetworkError } from '../../services/api';
 
 interface RelatedLink {
   title: string;
@@ -50,22 +51,19 @@ export default function CreateScreen() {
 
   const fetchMetadata = async () => {
     try {
-      const [categoriesRes, tagsRes] = await Promise.all([
-        fetch('http://localhost:3001/quiz/metadata/categories'),
-        fetch('http://localhost:3001/quiz/metadata/tags')
+      const [categoriesData, tagsData] = await Promise.all([
+        api.quiz.metadata.categories(),
+        api.quiz.metadata.tags()
       ]);
 
-      if (categoriesRes.ok) {
-        const categoriesData = await categoriesRes.json();
-        setAvailableCategories(['一般', ...categoriesData.categories]);
-      }
-
-      if (tagsRes.ok) {
-        const tagsData = await tagsRes.json();
-        setAvailableTags(tagsData.tags);
-      }
+      setAvailableCategories(['一般', ...(categoriesData.categories || [])]);
+      setAvailableTags(tagsData.tags || []);
     } catch (error) {
-      console.log('メタデータの取得に失敗しました:', error);
+      if (error instanceof NetworkError) {
+        console.log('ネットワークエラー:', error.message);
+      } else {
+        console.log('メタデータの取得に失敗しました:', error);
+      }
     }
   };
 
@@ -152,39 +150,31 @@ export default function CreateScreen() {
       formData.append('category', category);
       formData.append('tags', tags.join(','));
 
-      const endpoint = selectedFile.mimeType === 'application/pdf'
-        ? 'http://localhost:3001/quiz/generate/pdf'
-        : 'http://localhost:3001/quiz/generate/image';
+      const result = selectedFile.mimeType === 'application/pdf'
+        ? await api.quiz.generateFromPdf(formData)
+        : await api.quiz.generateFromImage(formData);
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        Alert.alert(
-          '成功',
-          `${result.length}問のクイズが生成されました！`,
-          [
-            {
-              text: 'OK', onPress: () => {
-                setSelectedFile(null);
-                // クイズ一覧画面に遷移
-                router.push('/(tabs)');
-              }
+      Alert.alert(
+        '成功',
+        `${result.length}問のクイズが生成されました！`,
+        [
+          {
+            text: 'OK', onPress: () => {
+              setSelectedFile(null);
+              // クイズ一覧画面に遷移
+              router.push('/(tabs)');
             }
-          ]
-        );
+          }
+        ]
+      );
+    } catch (error) {
+      if (error instanceof NetworkError) {
+        Alert.alert('ネットワークエラー', 'インターネット接続を確認してください');
+      } else if (error instanceof ApiError) {
+        Alert.alert('エラー', error.message);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'クイズ生成に失敗しました');
+        Alert.alert('エラー', 'クイズの生成に失敗しました');
       }
-    } catch (error: any) {
-      Alert.alert('エラー', `クイズの生成に失敗しました: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }
