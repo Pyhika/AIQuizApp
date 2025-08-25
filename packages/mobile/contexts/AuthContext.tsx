@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Alert } from 'react-native';
 import { AuthService, User } from '../services/authService';
 import { useAuthStore } from './useAuthStore';
+import { tokenRefreshManager } from '../services/tokenRefreshManager';
+import { eventEmitter, AuthEvents } from '../services/eventEmitter';
+import { router } from 'expo-router';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -38,8 +42,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { setToken, hydrate } = useAuthStore.getState();
 
   useEffect(() => {
-    checkAuthStatus();
+    initializeAuth();
+    
+    // トークン期限切れイベントをリッスン
+    const unsubscribeTokenExpired = eventEmitter.on(AuthEvents.TOKEN_EXPIRED, handleTokenExpired);
+    const unsubscribeSessionExpired = eventEmitter.on(AuthEvents.SESSION_EXPIRED, handleSessionExpired);
+    
+    // クリーンアップ
+    return () => {
+      tokenRefreshManager.cleanup();
+      unsubscribeTokenExpired();
+      unsubscribeSessionExpired();
+    };
   }, []);
+  
+  const initializeAuth = async () => {
+    await checkAuthStatus();
+    // トークンリフレッシュマネージャーを初期化
+    await tokenRefreshManager.initialize();
+  };
+  
+  const handleTokenExpired = (data: { reason: string }) => {
+    console.log('トークンの有効期限が切れました:', data.reason);
+    // 自動ログアウト
+    setIsAuthenticated(false);
+    setUser(null);
+    setToken(null);
+    Alert.alert(
+      'セッション期限切れ',
+      '認証の有効期限が切れました。再度ログインしてください。',
+      [{ text: 'OK', onPress: () => router.replace('/auth/login') }]
+    );
+  };
+  
+  const handleSessionExpired = () => {
+    console.log('セッションの有効期限が切れました');
+    // 必要に応じて追加の処理
+  };
 
   const checkAuthStatus = async () => {
     try {
@@ -67,6 +106,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       setUser(response.user);
       await setToken(response.access_token);
+      
+      // トークンリフレッシュマネージャーをセットアップ
+      await tokenRefreshManager.setupToken(
+        response.access_token,
+        response.refresh_token
+      );
     } catch (error) {
       throw error;
     }
@@ -84,6 +129,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       setUser(response.user);
       await setToken(response.access_token);
+      
+      // トークンリフレッシュマネージャーをセットアップ
+      await tokenRefreshManager.setupToken(
+        response.access_token,
+        response.refresh_token
+      );
     } catch (error) {
       throw error;
     }
@@ -95,12 +146,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(false);
       setUser(null);
       await setToken(null);
+      
+      // トークンリフレッシュマネージャーをクリーンアップ
+      tokenRefreshManager.cleanup();
+      
+      // ログイン画面にリダイレクト
+      router.replace('/auth/login');
     } catch (error) {
       console.log('ログアウトエラー:', error);
       // エラーがあってもログアウト状態にする
       setIsAuthenticated(false);
       setUser(null);
       await setToken(null);
+      tokenRefreshManager.cleanup();
+      router.replace('/auth/login');
     }
   };
 
