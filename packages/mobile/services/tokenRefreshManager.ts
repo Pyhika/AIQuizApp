@@ -10,8 +10,8 @@ interface TokenInfo {
 
 class TokenRefreshManager {
   private static instance: TokenRefreshManager;
-  private refreshTimer: NodeJS.Timeout | null = null;
-  private tokenExpiryTimer: NodeJS.Timeout | null = null;
+  private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  private tokenExpiryTimer: ReturnType<typeof setTimeout> | null = null;
   private isRefreshing = false;
   private refreshPromise: Promise<void> | null = null;
 

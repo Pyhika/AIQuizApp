@@ -79,7 +79,7 @@ export default function HomeScreen() {
 
   const loadQuizzes = async () => {
     try {
-      const data = await api.quiz.list();
+      const data: any = await api.quiz.list();
       setQuizzes(data.slice(0, 10)); // 最新10件を表示
     } catch (error) {
       if (error instanceof NetworkError) {
@@ -94,7 +94,7 @@ export default function HomeScreen() {
     if (!userId) return;
     try {
       const data = await api.quizAttempt.dashboard(userId);
-      setDashboardData(data);
+      setDashboardData(data as DashboardData);
     } catch (error) {
       if (error instanceof NetworkError) {
         console.log('ネットワークエラー:', error.message);
@@ -108,7 +108,7 @@ export default function HomeScreen() {
     if (!userId) return;
     try {
       const data = await api.quizAttempt.history(userId, 5);
-      setRecentAttempts(data);
+      setRecentAttempts(data as RecentAttempt[]);
     } catch (error) {
       if (error instanceof NetworkError) {
         console.log('ネットワークエラー:', error.message);
@@ -120,7 +120,7 @@ export default function HomeScreen() {
 
   const loadCategories = async () => {
     try {
-      const data = await api.quiz.metadata.categories();
+      const data: any = await api.quiz.metadata.categories();
       setAvailableCategories(data.categories || []);
     } catch (error) {
       if (error instanceof NetworkError) {
@@ -144,7 +144,7 @@ export default function HomeScreen() {
       }
       
       const data = await api.quiz.search(params);
-      setQuizzes(data);
+      setQuizzes(data as Quiz[]);
     } catch (error) {
       if (error instanceof NetworkError) {
         Alert.alert('ネットワークエラー', 'インターネット接続を確認してください');

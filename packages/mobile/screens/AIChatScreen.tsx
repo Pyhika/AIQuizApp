@@ -183,7 +183,6 @@ const AIChatScreen = () => {
           )}
           isTyping={isLoading}
           alwaysShowSend
-          scrollToBottom
           scrollToBottomComponent={() => (
             <MaterialIcons name="keyboard-arrow-down" size={24} color={theme.colors.primary} />
           )}

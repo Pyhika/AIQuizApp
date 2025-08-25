@@ -56,8 +56,8 @@ export default function CreateScreen() {
         api.quiz.metadata.tags()
       ]);
 
-      setAvailableCategories(['一般', ...(categoriesData.categories || [])]);
-      setAvailableTags(tagsData.tags || []);
+      setAvailableCategories(['一般', ...((categoriesData as any).categories || [])]);
+      setAvailableTags((tagsData as any).tags || []);
     } catch (error) {
       if (error instanceof NetworkError) {
         console.log('ネットワークエラー:', error.message);
@@ -150,7 +150,7 @@ export default function CreateScreen() {
       formData.append('category', category);
       formData.append('tags', tags.join(','));
 
-      const result = selectedFile.mimeType === 'application/pdf'
+      const result: any = selectedFile.mimeType === 'application/pdf'
         ? await api.quiz.generateFromPdf(formData)
         : await api.quiz.generateFromImage(formData);
 

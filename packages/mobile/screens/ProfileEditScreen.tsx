@@ -16,7 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from '../contexts/useAuthStore';
 
 interface UserProfile {
   id: string;
@@ -38,7 +39,8 @@ interface UserProfile {
 
 export default function ProfileEditScreen() {
   const router = useRouter();
-  const { token } = useAuthContext();
+  const { user } = useAuth();
+  const { token } = useAuthStore();
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -128,7 +130,7 @@ export default function ProfileEditScreen() {
       setIsEditMode(false);
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to update profile');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }

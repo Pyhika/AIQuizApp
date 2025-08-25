@@ -12,7 +12,8 @@ import { ProgressBar } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from '../contexts/useAuthStore';
 
 interface QuestionResult {
   questionId: string;
@@ -40,7 +41,8 @@ interface AttemptResult {
 export default function QuizResultScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { token } = useAuthContext();
+  const { user } = useAuth();
+  const { token } = useAuthStore();
   
   const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
