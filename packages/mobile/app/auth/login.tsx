@@ -1,16 +1,35 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Text, ActivityIndicator } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { TextInput, Button, Text, ActivityIndicator, HelperText, Surface, Divider, IconButton } from 'react-native-paper';
 import { router } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { validateEmail } from '../../utils/validation';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated]);
+
+  // Email validation
+  useEffect(() => {
+    if (email && !validateEmail(email)) {
+      setEmailError('有効なメールアドレスを入力してください');
+    } else {
+      setEmailError('');
+    }
+  }, [email]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -18,13 +37,18 @@ export default function LoginScreen() {
       return;
     }
 
+    if (!validateEmail(email)) {
+      Alert.alert('エラー', '有効なメールアドレスを入力してください');
+      return;
+    }
+
     setLoading(true);
     try {
       await login(email, password);
-      Alert.alert('成功', 'ログインしました');
+      // Success alert is removed - redirect happens automatically
       router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('エラー', error instanceof Error ? error.message : 'ログインに失敗しました');
+      Alert.alert('ログインエラー', error instanceof Error ? error.message : 'ログインに失敗しました');
     } finally {
       setLoading(false);
     }
@@ -36,9 +60,17 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
-        <Text variant="headlineMedium" style={styles.title}>
-          ログイン
-        </Text>
+        <Surface style={styles.logoContainer} elevation={0}>
+          <View style={styles.logoPlaceholder}>
+            <Text variant="displaySmall" style={styles.logoText}>🎓</Text>
+          </View>
+          <Text variant="headlineMedium" style={styles.title}>
+            Quiz Master
+          </Text>
+          <Text variant="bodyLarge" style={styles.subtitle}>
+            学習を始めましょう
+          </Text>
+        </Surface>
 
         <TextInput
           label="メールアドレス"
@@ -48,13 +80,19 @@ export default function LoginScreen() {
           autoCapitalize="none"
           autoComplete="email"
           style={styles.input}
+          error={!!emailError}
+          left={<TextInput.Icon icon="email" />}
         />
+        <HelperText type="error" visible={!!emailError}>
+          {emailError}
+        </HelperText>
 
         <TextInput
           label="パスワード"
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
+          left={<TextInput.Icon icon="lock" />}
           right={
             <TextInput.Icon
               icon={showPassword ? "eye-off" : "eye"}
@@ -63,23 +101,61 @@ export default function LoginScreen() {
           }
           style={styles.input}
         />
+        
+        <View style={styles.forgotPasswordContainer}>
+          <Button
+            mode="text"
+            onPress={() => Alert.alert('開発中', 'パスワードリセット機能は開発中です')}
+            style={styles.forgotPasswordButton}
+          >
+            パスワードを忘れた方
+          </Button>
+        </View>
 
         <Button
           mode="contained"
           onPress={handleLogin}
-          disabled={loading}
+          disabled={loading || !email || !password}
           style={styles.button}
+          icon="login"
         >
           {loading ? <ActivityIndicator color="white" /> : 'ログイン'}
         </Button>
 
+        <View style={styles.dividerContainer}>
+          <View style={styles.dividerLine} />
+          <Text variant="bodyMedium" style={styles.dividerText}>または</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
         <Button
-          mode="text"
+          mode="outlined"
           onPress={() => router.push('/auth/register')}
-          style={styles.linkButton}
+          style={styles.registerButton}
+          icon="account-plus"
         >
-          アカウントをお持ちでない方はこちら
+          新しいアカウントを作成
         </Button>
+        
+        <View style={styles.socialLoginContainer}>
+          <Text variant="bodyMedium" style={styles.socialLoginText}>
+            ソーシャルアカウントでログイン
+          </Text>
+          <View style={styles.socialButtons}>
+            <IconButton
+              icon="google"
+              size={30}
+              onPress={() => Alert.alert('開発中', 'Googleログインは開発中です')}
+              style={styles.socialButton}
+            />
+            <IconButton
+              icon="apple"
+              size={30}
+              onPress={() => Alert.alert('開発中', 'Appleログインは開発中です')}
+              style={styles.socialButton}
+            />
+          </View>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -95,19 +171,77 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  title: {
-    textAlign: 'center',
+  logoContainer: {
+    alignItems: 'center',
     marginBottom: 32,
-    fontWeight: 'bold',
+    backgroundColor: 'transparent',
   },
-  input: {
+  logoPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#6200ea',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
+  logoText: {
+    fontSize: 40,
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: 8,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    textAlign: 'center',
+    color: '#666',
+  },
+  input: {
+    marginBottom: 4,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 16,
+  },
+  forgotPasswordButton: {
+    marginRight: -8,
+  },
   button: {
-    marginTop: 16,
+    marginTop: 8,
     paddingVertical: 8,
   },
-  linkButton: {
-    marginTop: 16,
+  registerButton: {
+    marginTop: 8,
+    paddingVertical: 8,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#666',
+  },
+  socialLoginContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  socialLoginText: {
+    color: '#666',
+    marginBottom: 12,
+  },
+  socialButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  socialButton: {
+    marginHorizontal: 8,
   },
 });

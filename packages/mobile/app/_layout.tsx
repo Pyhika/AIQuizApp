@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { PaperProvider } from 'react-native-paper';
 import { AuthProvider } from '../contexts/AuthContext';
+import { AuthGuard } from '../components/AuthGuard';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -22,21 +23,23 @@ export default function RootLayout() {
   return (
     <PaperProvider>
       <AuthProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="auth/login" options={{
-              title: 'ログイン',
-              presentation: 'modal'
-            }} />
-            <Stack.Screen name="auth/register" options={{
-              title: 'アカウント作成',
-              presentation: 'modal'
-            }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        <AuthGuard>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="auth/login" options={{
+                title: 'ログイン',
+                presentation: 'modal'
+              }} />
+              <Stack.Screen name="auth/register" options={{
+                title: 'アカウント作成',
+                presentation: 'modal'
+              }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </AuthGuard>
       </AuthProvider>
     </PaperProvider>
   );
